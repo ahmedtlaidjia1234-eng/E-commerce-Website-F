@@ -24,8 +24,9 @@ const app = express();
 const allowedOrigins = [
 //   "https://ahmedtl.com",
 //   "https://www.ahmedtl.com",
-  "http://localhost:5173", 
+  // "http://localhost:5173", 
   "*"
+  // "https://e-commerce-website-f.vercel.app"
 ];
 
 // Middleware
@@ -43,6 +44,13 @@ app.use(
     credentials: true,
   })
 ); 
+
+// app.use((req, res, next) => {
+//   res.setHeader("Access-Control-Allow-Origin", "https://e-commerce-website-f.vercel.app");
+//   res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+//   res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
+//   next();
+// });
 
 // Rate limiting
 const limiter = rateLimit({ 
