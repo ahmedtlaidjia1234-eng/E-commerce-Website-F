@@ -24,10 +24,12 @@ import AboutUs from './pages/AboutUs';
 import NotFound from './pages/NotFound';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import { HelmetProvider } from "react-helmet-async";
+import React from 'react';
 
 const queryClient = new QueryClient();
 const wish = true
 const App = () => (
+<React.StrictMode>
 <HelmetProvider>
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -67,6 +69,7 @@ const App = () => (
     </TooltipProvider>
   </QueryClientProvider>
 </HelmetProvider>
+</React.StrictMode>
 );
 
 export default App;

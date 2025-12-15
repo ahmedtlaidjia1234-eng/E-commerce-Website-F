@@ -676,13 +676,13 @@ addCurrentUser: async (email) =>{
         }
       },
       
-      signIn: async (email, password) => {
+      signIn: async (email, password ) => {
        // console.log({email,password})
   try {
     
     const response = await axios.post(
       `${URL}/api/user/login`,
-      { email, password}
+      { email, password }
     );
 
     const token = response.data.token;

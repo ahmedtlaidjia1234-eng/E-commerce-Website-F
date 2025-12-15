@@ -9,6 +9,18 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useStore } from '@/lib/store';
 import { useNavigate } from 'react-router-dom';
+// import axios from 'axios';
+// import { REACT_APP_CHARGILY_APP_KEY } from "@/.env";
+import axios from 'axios';
+// import ChargilyPay from "@chargily/chargily-pay";
+// import ChargilyPayButton from 'chargily-epay-react-js';
+// import {create_payement} from 'chargily-epay-react-js'
+// import { ChargilyClient } from '@chargily/chargily-pay';
+
+// const client = new ChargilyClient({
+//   api_key: REACT_APP_CHARGILY_APP_KEY,
+//   mode: 'test', // Change to 'live' when deploying your application
+// });
 
 export default function CheckoutPage() {
   const { currentUser,cart, clearCart, addNotification } = useStore();
@@ -26,6 +38,76 @@ export default function CheckoutPage() {
     zipCode: '',
     country: 'US',
   });
+
+
+  //   const handleClick = async () => {
+  //   const invoice = {
+  //     amount: 600,
+  //     invoice_number: 23,
+  //     client: "John Doe",
+  //     mode: "CIB",          // e.g., payment method
+  //     webhook_url: "https://your-backend-url.com/webhook",
+  //     back_url: "http://localhost:5173/after-payment",
+  //     discount: 0
+  //   };
+
+  //   try {
+  //     await create_payement(invoice);
+  //     // The user may be redirected or payment initiated
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // };
+
+  const handlePayment = async (e)=>{
+    try{
+      e.preventDefault()
+//       const options = {
+//   method: 'POST',
+//   headers: {
+//     Authorization: `test_sk_q4YQHdWk1XLmEB6y2sHCk6VFjzKhVV53h1UqsPni`,
+//     'Content-Type': 'application/json'
+//   },
+//   body: '{"amount":2000,"currency":"dzd","success_url":"http://localhost:5173/payments/success"}'
+// };
+//   const pay = await axios.post('https://pay.chargily.net/test/api/v2/checkouts',options.body,{headers : options.headers})
+//   if(pay){
+//     console.log(pay)
+//   } 
+
+
+
+axios.post(`${URL}`, {
+        "amount": 10000,
+        "contact": "37990d08-fc51-4c32-ad40-1552d13c00d1",
+        "url": "http://localhost:5173/thank-you-page",
+        "items": [
+            {
+                "name": "Seller product",
+                "price": 5000,
+                "quantity": 2
+            }
+        ]
+    }, {
+        headers: {
+            "Accept": "application/json",
+            "Authorization": `ufzz4as6c9j8r53rb49elx1pw73nshl9ch9nvzi1v355gidi5f`
+        }
+    })
+    .then((result) => {
+        let response = result.data;
+
+        console.log(response);
+        window.location.href = response.data.url;
+    }).catch((error) => {
+        console.log(error);
+    });
+
+
+    }catch(err){
+      console.log(err)
+    }
+  }
 
   const paymentMethods = [
   { id: "default", label: "please press here to select a method" },
@@ -108,7 +190,7 @@ export default function CheckoutPage() {
           <p className="text-gray-600">Complete your order securely</p>
         </motion.div>
         
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handlePayment}>
           <div className="grid lg:grid-cols-2 gap-8">
             {/* Billing & Payment Info */}
             <div className="space-y-8">
@@ -146,7 +228,7 @@ export default function CheckoutPage() {
           </SelectTrigger>
           <SelectContent>
             {paymentMethods.map((m) => (
-              <SelectItem key={m.id} value={m.id}>
+              <SelectItem key={m?.id} value={m.id}>
                 {m.label}
               </SelectItem>
             ))}
@@ -370,6 +452,7 @@ export default function CheckoutPage() {
                     className="w-full"
                     size="lg"
                     disabled={isProcessing}
+                    // onClick={()=> handlePayment}
                   >
                     <Lock className="h-4 w-4 mr-2" />
                     {isProcessing ? 'Processing...' : `Pay $${total.toFixed(2)}`}

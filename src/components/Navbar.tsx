@@ -1,4 +1,4 @@
-import { use, useEffect, useState } from 'react';
+import { use, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -14,6 +14,7 @@ import {
   Users,
   MessageSquare,
   Star,
+  Globe,
   UserCircle,
   ShoppingBag,
   Shield
@@ -34,6 +35,8 @@ import Cookies from 'universal-cookie';
 import Header from './MetaHeader';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
+import {URL} from '../lib/BackendURL.js'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select.js';
 
 
 export default function Navbar() {
@@ -53,6 +56,18 @@ export default function Navbar() {
     websiteSettings,
     // addNotification
   } = useStore();
+
+
+
+  const [lang, setLang] = useState("en");
+
+const handleLanguageChange = (lang) => {
+  const googleSelect = document.querySelector(".goog-te-combo");
+  if (!googleSelect) return;
+
+  googleSelect.value = lang;
+  googleSelect.dispatchEvent(new Event("change"));
+};
 
   // addNotification('ass','error')
 const CU = currentUser?.user || currentUser;
@@ -122,6 +137,7 @@ if(isMobileMenuOpen){
   },[isMobileMenuOpen])
 
   useEffect(()=>{
+    console.log(currentUser)
     if(currentUser && currentUser.firstTimeLog && !currentUser.followed){
       setTimeout(()=>{
         if(confirm(`
@@ -135,10 +151,26 @@ You can unsubscribe at any time.
           
           `)){
           addFollower(currentUser.email,currentUser.fName)
+        }else{
+          try{
+            const updateUser = async(id,firstTimeLog)=>{
+             
+              const update = await axios.put(`${URL}/api/user/login/applyFirstTimeLog`,{id,firstTimeLog})
+              if(update.status == 200)return true
+              return false
+            }
+             updateUser(currentUser.id,false)
+             console.log(currentUser)
+            //  getCurrentUser(currentUser)
+          }catch(err){
+            console.log(err)
+          }
         }
       },5000)
+    }else{
+      return
     }
-  },[currentUser])
+  },[])
 
 useEffect(() => {
   getWebsiteSettings();
@@ -192,7 +224,8 @@ useEffect(() => {
   return (
     <>
     <Header />
-      <nav className="sticky top-0 z-50 border-b" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
+    <div  id="google_translate_element" style={{position : 'absolute',zIndex : '-5'}}></div>
+      <nav translate='no' className="sticky top-0 z-50 border-b" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
@@ -212,6 +245,14 @@ useEffect(() => {
                 </span>
               </motion.div>
             </Link>
+
+
+            {/* <Button onClick={() => changeLanguage("ar")}>Arabic</Button>
+            <Button onClick={() => changeLanguage("en")}>English</Button>
+            <Button onClick={() => changeLanguage("fr")}>French</Button> */}
+
+              
+
             {/* Desktop Search Bar - Centered */}
             <div className="hidden md:flex flex-1 max-w-lg mx-8">
               <div className="relative w-full">
@@ -243,7 +284,54 @@ useEffect(() => {
                 <Search className="h-5 w-5" />
               </Button>
 
-              <div id="google_translate_element"></div>
+            
+
+
+      {/* <select value={lang} onValueChange={handleChange}>
+      <option value="en">English</option>
+      <option value="fr">Français</option>
+      <option value="ar">العربية</option>
+    </select> */}
+
+    {/* <Select
+      value={lang}
+      onChange={(e) => handleLanguageChange(e.target.value)}
+    >
+      <SelectTrigger>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="en">English</SelectItem>
+        <SelectItem value="fr">Français</SelectItem>
+        <SelectItem value="ar">العربية</SelectItem>
+      </SelectContent>
+    </Select> */}
+<div
+  className="flex items-center gap-2 h-11 rounded-md border px-3"
+  style={{
+    backgroundColor: "var(--color-elementsBackground)",
+    borderColor: "var(--color-border)",
+  }}
+>
+<Globe className="h-4 w-4 opacity-70" />
+
+    <select
+  defaultValue="en"
+  onChange={(e) => handleLanguageChange(e.target.value)}
+  className="w-full h-10  rounded-md border border-white px-3 text-sm"
+  style={{
+    backgroundColor: "var(--color-elementsBackground)",
+    color: "var(--color-text)",
+  }}
+
+>
+  <option value="en">English</option>
+  <option value="fr">Français</option>
+  <option value="ar">العربية</option>
+</select>
+</div>
+              
+            
 
               {/* Wishlist */}
               {wish && <Button
@@ -285,6 +373,8 @@ useEffect(() => {
               {/* User Menu */}
               {CU ? (
                 <DropdownMenu>
+                  
+
                   <DropdownMenuTrigger asChild >
                     <Button variant="ghost" size="sm" className="relative">
                       <div 
@@ -306,6 +396,8 @@ useEffect(() => {
                     </div>
                     <DropdownMenuSeparator />
                     
+                    
+
                     <DropdownMenuItem onClick={() => navigate('/profile')} className=" cursor-pointer transition-colors duration-200">
                       <UserCircle className="mr-2 h-4 w-4 hover:border-b border-white hover:border-[var(--color-primary)] " />
                       Profile
@@ -356,12 +448,18 @@ useEffect(() => {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
+                <>
+
                 <Button onClick={handleAuthClick} size="sm" className="data-[highlighted]:var(--color-text-secondary) hover:bg-[var(--color-primary)] hover:text-white cursor-pointer transition-colors duration-200">
                   <User className="h-4 w-4 mr-2" />
                   Sign In
                 </Button>
+                </>
+                
               )}
             </div>
+
+            
 
             {/* Mobile Menu Button */}
             <Button
@@ -403,14 +501,39 @@ useEffect(() => {
                   />
                 </form>
             <hr />
-                <div>
-                <div id="google_translate_element"></div>
-                </div>
+<div
+  className="flex items-center gap-2 h-11 rounded-md border px-3"
+  style={{
+    backgroundColor: "var(--color-elementsBackground)",
+    borderColor: "var(--color-border)",
+  }}
+>
+                
+<Globe className="h-4 w-4 opacity-70" />  
+
+<select
+  defaultValue="en"
+  onChange={(e) => handleLanguageChange(e.target.value)}
+  className="w-full h-10  rounded-md border border-white px-3 text-sm"
+  style={{
+    backgroundColor: "var(--color-elementsBackground)",
+    color: "var(--color-text)",
+  }}
+>
+ 
+  <option value="en">English</option>
+  <option value="fr">Français</option>
+  <option value="ar">العربية</option>
+</select>
+    </div>  
+
 <hr />
                 {/* Mobile Navigation Links */}
                 <div className="space-y-2 overflow-y-auto h-[300px]">
                   {CU ? (
                     <>
+
+                    
                       <div className="flex items-center space-x-3 p-2 rounded-lg" style={{ backgroundColor: 'var(--color-background)' }}>
                         <div 
                           className="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium"
@@ -436,6 +559,8 @@ useEffect(() => {
                         <UserCircle className="mr-3 h-5 w-5" />
                         Profile
                       </Button>
+
+                      
 
                       <Button
                         variant="ghost"
@@ -542,10 +667,37 @@ useEffect(() => {
                       </div>
                     </>
                   ) : (
+                    <>
+<div
+  className="flex items-center gap-2 h-11 rounded-md border px-3"
+  style={{
+    backgroundColor: "var(--color-elementsBackground)",
+    borderColor: "var(--color-border)",
+  }}
+>
+<Globe className="h-4 w-4 opacity-70" />
+    <select
+  defaultValue="en"
+  onChange={(e) => handleLanguageChange(e.target.value)}
+  className="w-full h-10  rounded-md border border-white px-3 text-sm"
+  style={{
+    backgroundColor: "var(--color-elementsBackground)",
+    color: "var(--color-text)",
+  }}
+
+>
+  <option value="en">English</option>
+  <option value="fr">Français</option>
+  <option value="ar">العربية</option>
+</select>
+</div>
+
                     <Button onClick={handleAuthClick} className="w-full">
                       <User className="h-4 w-4 mr-2" />
                       Sign In
                     </Button>
+                    </>
+                    
                   )}
                 </div>
               </div>

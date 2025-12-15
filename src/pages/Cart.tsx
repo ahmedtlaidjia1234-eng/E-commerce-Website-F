@@ -13,7 +13,8 @@ export default function CartPage() {
   const shipping = subtotal > 50 ? 0 : 9.99;
   const tax = subtotal * 0.08;
   const total = subtotal + shipping + tax;
-  
+  const Productdata = cart.find(p=> p.product.price == subtotal)?.product
+  console.log()
   if (cart.length === 0) {
     return (
       <div className="min-h-screen bg-[var(--color-Background)] flex items-center justify-center">
@@ -59,8 +60,8 @@ export default function CartPage() {
                   <CardContent className="p-6">
                     <div className="flex items-center space-x-4">
                       <img
-                        src={item.product.image}
-                        alt={item.product.name}
+                        src={item.product.img}
+                        alt={item.product.Name}
                         className="w-20 h-20 object-cover rounded-lg"
                       />
                       
@@ -69,11 +70,11 @@ export default function CartPage() {
                           to={`/product/${item.product.id}`}
                           className="text-lg font-semibold hover:text-blue-600 transition-colors"
                         >
-                          {item.product.name}
+                          {item.product.Name}
                         </Link>
                         <p className="text-gray-600">{item.product.category}</p>
                         <p className="text-xl font-bold text-blue-600">
-                          ${item.product.price}
+                          {item.product.symbole} {item.product.price}
                         </p>
                       </div>
                       
@@ -99,7 +100,7 @@ export default function CartPage() {
                       
                       <div className="text-right">
                         <p className="text-lg font-bold">
-                          ${(item.product.price * item.quantity).toFixed(2)}
+                         {item.product.symbole} {(item.product.price * item.quantity).toFixed(2)}
                         </p>
                         <Button
                           variant="ghost"
@@ -144,7 +145,7 @@ export default function CartPage() {
               <CardContent className="space-y-4">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
-                  <span>${subtotal.toFixed(2)}</span>
+                  <span> {subtotal.toFixed(2)}</span>
                 </div>
                 
                 <div className="flex justify-between">
@@ -153,26 +154,26 @@ export default function CartPage() {
                     {shipping === 0 ? (
                       <span className="text-green-600">Free</span>
                     ) : (
-                      `$${shipping.toFixed(2)}`
+                      `$ ${shipping.toFixed(2)}`
                     )}
                   </span>
                 </div>
                 
                 <div className="flex justify-between">
                   <span>Tax</span>
-                  <span>${tax.toFixed(2)}</span>
+                  <span> {tax.toFixed(2)}</span>
                 </div>
                 
                 <Separator />
                 
                 <div className="flex justify-between text-lg font-bold">
                   <span>Total</span>
-                  <span>${total.toFixed(2)}</span>
+                  <span> {total.toFixed(2)}</span>
                 </div>
                 
                 {subtotal < 50 && (
                   <p className="text-sm text-gray-600">
-                    Add ${(50 - subtotal).toFixed(2)} more for free shipping!
+                    Add  {(50 - subtotal).toFixed(2)} more for free shipping!
                   </p>
                 )}
                 

@@ -14,6 +14,7 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // "chargily-epay-react-js": "/node_modules/chargily-epay-react-js/src/index.js"
     },
   },
 }));
