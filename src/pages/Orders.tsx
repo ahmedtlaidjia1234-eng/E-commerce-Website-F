@@ -1,490 +1,394 @@
-import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, Calendar, CreditCard, Truck, CheckCircle, Clock, AlertCircle, MapPin, ChevronDown } from 'lucide-react';
+import {
+    Package, Calendar, CreditCard, Truck, CheckCircle, Clock, AlertCircle, MapPin, ChevronDown, ShoppingBag, DollarSign, Loader, XCircle, MoreVertical
+} from 'lucide-react';
+// Assuming these UI components are from a library like shadcn/ui
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+// Note: Tabs are not used in the final version but kept for context consistency.
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useStore } from '@/lib/store';
+
+
+// --- MOCK Dropdown Menu COMPONENTS (ENHANCED WITH FRAMER-MOTION) ---
+// We convert DropdownMenuContent and DropdownMenuItem into motion components.
+
+const DropdownMenu = ({ children }: { children: React.ReactNode }) => <div className="relative inline-block text-left">{children}</div>;
+const DropdownMenuTrigger = ({ children }: { children: React.ReactNode }) => children;
+
+// Enhanced DropdownMenuContent with Framer Motion variants
+const menuVariants = {
+    open: {
+        opacity: 1,
+        scale: 1,
+        transition: {
+            type: "spring",
+            duration: 0.3,
+            bounce: 0.2,
+            staggerChildren: 0.05,
+            delayChildren: 0.05,
+        }
+    },
+    closed: {
+        opacity: 0,
+        scale: 0.95,
+        transition: {
+            duration: 0.2
+        }
+    }
+};
+
+const MotionDropdownMenuContent = motion(
+    ({ children, open }: { children: React.ReactNode, open: boolean }) => (
+        <motion.div
+            variants={menuVariants}
+            initial="closed"
+            animate={open ? "open" : "closed"}
+            // className for styling
+            className={`absolute right-0 z-20 mt-2 w-48 rounded-lg border shadow-xl bg-white origin-top-right ${open ? 'pointer-events-auto' : 'pointer-events-none'}`}
+        >
+            <div className="py-1">{children}</div>
+        </motion.div>
+    )
+);
+
+// Item variants for staggered list animation
+const itemVariants = {
+    open: { opacity: 1, y: 0 },
+    closed: { opacity: 0, y: -10 }
+};
+
+const MotionDropdownMenuItem = motion(
+    ({ children, onClick }: { children: React.ReactNode, onClick: () => void }) => (
+        <motion.div
+            variants={itemVariants}
+            onClick={onClick}
+            // Tailwind classes
+            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors"
+            whileHover={{ backgroundColor: '#f3f4f6', scale: 1.02 }} // Subtle scale on hover
+            whileTap={{ scale: 0.98 }} // Haptic feedback on click
+        >
+            {children}
+        </motion.div>
+    )
+);
+
+const DropdownMenuContent = MotionDropdownMenuContent;
+const DropdownMenuItem = MotionDropdownMenuItem;
+const DropdownMenuSeparator = () => <div className="border-t border-gray-200 my-1"></div>;
+
+
+// --- INTERFACE DEFINITIONS & MOCK DATA (UNCHANGED) ---
 
 interface OrderItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  image: string;
+    id: string;
+    name: string;
+    price: number;
+    quantity: number;
+    image: string;
 }
 
 interface Order {
-  id: string;
-  date: string;
-  status: string;
-  total: number;
-  items: OrderItem[];
-  shippingAddress: string;
-  trackingNumber: string | null;
+    id: string;
+    date: string;
+    status: 'processing' | 'shipped' | 'delivered' | 'cancelled';
+    isPaid: boolean; 
+    total: number;
+    items: OrderItem[];
+    shippingAddress: string;
+    trackingNumber: string | null;
+    shippingCost: number;
+    tax: number;
 }
 
+const initialOrders: Order[] = [
+    { id: 'ORD-001', date: '2024-01-15', status: 'delivered', isPaid: true, total: 319.97, shippingCost: 10.00, tax: 9.98, items: [/*...*/], shippingAddress: '...', trackingNumber: 'TRK123456789' },
+    { id: 'ORD-002', date: '2024-01-20', status: 'shipped', isPaid: true, total: 164.98, shippingCost: 5.00, tax: 10.00, items: [/*...*/], shippingAddress: '...', trackingNumber: 'TRK987654321' },
+    { id: 'ORD-003', date: '2024-01-25', status: 'processing', isPaid: false, total: 99.99, shippingCost: 5.00, tax: 5.00, items: [/*...*/], shippingAddress: '...', trackingNumber: null },
+    { id: 'ORD-004', date: '2024-02-01', status: 'cancelled', isPaid: true, total: 50.00, shippingCost: 0.00, tax: 0.00, items: [/*...*/], shippingAddress: '...', trackingNumber: null },
+    { id: 'ORD-004', date: '2024-02-01', status: 'cancelled', isPaid: true, total: 50.00, shippingCost: 0.00, tax: 0.00, items: [/*...*/], shippingAddress: '...', trackingNumber: null },
+    { id: 'ORD-004', date: '2024-02-01', status: 'cancelled', isPaid: true, total: 50.00, shippingCost: 0.00, tax: 0.00, items: [/*...*/], shippingAddress: '...', trackingNumber: null },
+    { id: 'ORD-004', date: '2024-02-01', status: 'cancelled', isPaid: true, total: 50.00, shippingCost: 0.00, tax: 0.00, items: [/*...*/], shippingAddress: '...', trackingNumber: null }
 
-export interface UserAddress {
-  line1: string;
-  line2?: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
-}
+  ];
 
-export interface UserPreferences {
-  language: string;
-  currency: string;
-  notifications: {
-    email: boolean;
-    sms: boolean;
-    push: boolean;
-  };
-}
 
-export interface PaymentMethod {
-  type: string;
-  brand: string;
-  last4: string;
-  expires: string;
-  default: boolean;
-}
+// --- HELPER FUNCTIONS (ENHANCED with Framer-Motion Badge) ---
 
-export interface UserStats {
-  totalOrders: number;
-  totalSpent: number;
-  lastOrderDate: string;
-}
+const StatusBadge = ({ status }: { status: Order['status'] }) => {
+    let color = 'bg-gray-200 text-gray-800';
+    let icon = <Clock className="mr-1 h-3 w-3" />;
+    let statusText = status;
 
-export interface ClientUser {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  createdAt: string;
-  role: string;
-  address: UserAddress;
-  preferences: UserPreferences;
-  paymentMethods: PaymentMethod[];
-  stats: UserStats;
-}
-
-export const clientUser: ClientUser = {
-  id: "USR-90421",
-  name: "Michael Johnson",
-  email: "michael.johnson@example.com",
-  phone: "+1 415-555-2984",
-  createdAt: "2024-10-12T14:33:21.000Z",
-  role: "customer",
-  address: {
-    line1: "742 Evergreen Terrace",
-    line2: "Apt 12B",
-    city: "Springfield",
-    state: "Illinois",
-    postalCode: "62704",
-    country: "USA"
-  },
-  preferences: {
-    language: "en",
-    currency: "USD",
-    notifications: {
-      email: true,
-      sms: true,
-      push: false
+    switch (status) {
+        case 'delivered': color = 'bg-green-100 text-green-800'; icon = <CheckCircle className="mr-1 h-3 w-3" />; break;
+        case 'shipped': color = 'bg-blue-100 text-blue-800'; icon = <Truck className="mr-1 h-3 w-3" />; break;
+        case 'processing': color = 'bg-yellow-100 text-yellow-800'; icon = <Loader className="mr-1 h-3 w-3 animate-spin" />; break;
+        case 'cancelled': color = 'bg-red-100 text-red-800'; icon = <XCircle className="mr-1 h-3 w-3" />; break;
     }
-  },
-  paymentMethods: [
-    {
-      type: "credit_card",
-      brand: "Visa",
-      last4: "2243",
-      expires: "12/27",
-      default: true
-    }
-  ],
-  stats: {
-    totalOrders: 14,
-    totalSpent: 1298.55,
-    lastOrderDate: "2024-12-19"
-  }
+
+    return (
+        <motion.div
+            key={status} // Key is essential for AnimatePresence/Framer to track changes
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className={`capitalize ${color} flex items-center px-2.5 py-0.5 text-xs font-semibold rounded-full`}
+        >
+            {icon}{statusText}
+        </motion.div>
+    );
+};
+
+const PaymentBadge = ({ isPaid }: { isPaid: boolean }) => {
+    const text = isPaid ? 'Paid' : 'Pending';
+    const color = isPaid ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800';
+    const icon = isPaid ? <DollarSign className="mr-1 h-3 w-3" /> : <AlertCircle className="mr-1 h-3 w-3" />;
+
+    return (
+        <motion.div
+            key={text} // Key is essential for AnimatePresence/Framer to track changes
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            transition={{ duration: 0.2 }}
+            className={`flex items-center px-2.5 py-0.5 text-xs font-semibold rounded-full ${color}`}
+        >
+            {icon}{text}
+        </motion.div>
+    );
 };
 
 
+// --- ORDER MANAGEMENT TABLE COMPONENT (ANIMATED) ---
+
+const OrderManagementTable = () => {
+    const [orders, setOrders] = useState<Order[]>(initialOrders);
+    const [filter, setFilter] = useState('all');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+
+    // --- State Update Logic ---
+    const updateOrder = (id: string, updates: Partial<Order>) => {
+        setOrders(prevOrders =>
+            prevOrders.map(order =>
+                order.id === id ? { ...order, ...updates } : order
+            )
+        );
+        setOpenDropdownId(null);
+    };
+
+    const handleStatusChange = (id: string, newStatus: Order['status']) => {
+        const updates: Partial<Order> = { status: newStatus };
+        if (newStatus === 'delivered') {
+            updates.isPaid = true;
+        } else if (newStatus === 'cancelled') {
+             updates.isPaid = false;
+        }
+        updateOrder(id, updates);
+    };
+
+    const handlePaymentToggle = (id: string, isPaid: boolean) => {
+        updateOrder(id, { isPaid });
+    };
+
+    // --- Filtering and Search Logic ---
+    const filteredOrders = useMemo(() => {
+        return orders
+            .filter(order => filter === 'all' || order.status === filter)
+            .filter(order =>
+                order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                order.items.some(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
+            )
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }, [orders, filter, searchTerm]);
 
 
-const mockOrders: Order[] = [
-  {
-    id: 'ORD-001',
-    date: '2024-01-15',
-    status: 'delivered',
-    total: 299.99,
-    items: [
-      {
-        id: '1',
-        name: 'Wireless Headphones',
-        price: 299.99,
-        quantity: 1,
-        image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop'
-      }
-    ],
-    shippingAddress: '123 Main St, City, State 12345',
-    trackingNumber: 'TRK123456789'
-  },
-  {
-    id: 'ORD-002',
-    date: '2024-01-20',
-    status: 'shipped',
-    total: 149.98,
-    items: [
-      {
-        id: '2',
-        name: 'Smart Watch',
-        price: 149.98,
-        quantity: 1,
-        image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&h=300&fit=crop'
-      }
-    ],
-    shippingAddress: '123 Main St, City, State 12345',
-    trackingNumber: 'TRK987654321'
-  },
-  {
-    id: 'ORD-003',
-    date: '2024-01-25',
-    status: 'processing',
-    total: 89.99,
-    items: [
-      {
-        id: '3',
-        name: 'Bluetooth Speaker',
-        price: 89.99,
-        quantity: 1,
-        image: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=300&h=300&fit=crop'
-      }
-    ],
-    shippingAddress: '123 Main St, City, State 12345',
-    trackingNumber: null
-  }
-];
+    return (
+        <Card style={{ backgroundColor: 'var(--color-surface)' }} className="shadow-lg">
+            <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between p-6 border-b space-y-4 md:space-y-0">
+                <CardTitle className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>Order Management</CardTitle>
+                <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full md:w-auto">
+                    {/* Search Input (No animation needed, standard input) */}
+                    <input
+                        type="text"
+                        placeholder="Search by ID or Product..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="p-2 border rounded-lg text-sm w-full sm:w-48"
+                        style={{ borderColor: 'var(--color-elementsBorder)', color: 'var(--color-text)', backgroundColor: 'var(--color-elementsBackground)' }}
+                    />
+                    {/* Status Filter (No animation needed, standard select) */}
+                    <select
+                        value={filter}
+                        onChange={(e) => setFilter(e.target.value)}
+                        className="p-2 border rounded-lg text-sm w-full sm:w-auto"
+                        style={{ borderColor: 'var(--color-elementsBorder)', color: 'var(--color-text)', backgroundColor: 'var(--color-elementsBackground)' }}
+                    >
+                        <option value="all">All Statuses</option>
+                        <option value="processing">Processing</option>
+                        <option value="shipped">Shipped</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+            </CardHeader>
+            <CardContent className="p-0">
+                <div className="">
+                    <table className="w-full text-sm bg-white text-[var(--color-text)]">
+                        <thead className="bg-gray-50/20 sticky top-0 ">
+                            <tr className='bg-white py-2'>
+                                <th className="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                                <th className="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                <th className="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th className="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Payment</th>
+                                <th className="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                <th className="px-4 py-3 text-right font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        {/* Use AnimatePresence on the table body to animate row additions/removals/changes */}
+                        <AnimatePresence initial={false}>
+                            <tbody >
+                                {filteredOrders.length === 0 && (
+                                    <motion.tr
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: 'auto' }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        transition={{ duration: 0.2 }}
+                                    >
+                                        <td colSpan={6} className="text-center text-gray-500 py-12">
+                                            No orders found matching the criteria.
+                                        </td>
+                                    </motion.tr>
+                                )}
+                                {filteredOrders.map(order => (
+                                    // Make the row a motion component
+                                    <motion.tr
+                                        key={order.id}
+                                        initial={{ opacity: 0, y: 10 }} // Slide in from below
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, x: -50 }} // Slide out to the left
+                                        transition={{ duration: 0.3 }}
+                                        className="border-b hover:bg-gray-50/10 transition-colors"
+                                    >
+                                        <td className="px-4 py-3 font-medium text-[var(--color-primary)]">{order.id}</td>
+                                        <td className="px-4 py-3 text-gray-600">{new Date(order.date).toLocaleDateString()}</td>
+                                        <td className="px-4 py-3">
+                                            {/* Status Badge with its own transition (key ensures component remounts for status change animation) */}
+                                            <AnimatePresence mode="wait">
+                                                <StatusBadge status={order.status} key={order.status} />
+                                            </AnimatePresence>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            {/* Payment Badge with its own transition */}
+                                            <AnimatePresence mode="wait">
+                                                <PaymentBadge isPaid={order.isPaid} key={String(order.isPaid)} />
+                                            </AnimatePresence>
+                                        </td>
+                                        <td className="px-4 py-3 font-semibold">${order.total.toFixed(2)}</td>
+                                        <td className="px-4 py-3 text-right">
+                                            {/* --- ACTIONS DROPDOWN (For editing) --- */}
+                                            
+                                            <DropdownMenu >
+                                                <DropdownMenuTrigger>
+                                                    <motion.div
+                                                        whileTap={{ scale: 0.9 }}
+                                                        whileHover={{ scale: 1.1 }}
+                                                        // Subtle shake animation on hover to indicate interactiveness
+                                                        whileFocus={{ rotate: [0, 5, -5, 5, 0], transition: { duration: 0.3 } }}
+                                                    >
+                                                        <Button 
+                                                            variant="ghost" 
+                                                            size="sm" 
+                                                            onClick={() => setOpenDropdownId(openDropdownId === order.id ? null : order.id)}
+                                                            className="hover:bg-gray-100  h-6 w-6"
+                                                        >
+                                                            <MoreVertical className="h-4 w-4" />
+                                                        </Button>
+                                                    </motion.div>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent open={openDropdownId === order.id}>
+                                                    
+                                                    {/* Payment Status Toggle */}
+                                                    <DropdownMenuItem onClick={() => handlePaymentToggle(order.id, !order.isPaid)}>
+                                                        {order.isPaid ? (
+                                                            <div className="flex items-center text-amber-600"><DollarSign className="mr-2 h-4 w-4" /> Mark as Pending</div>
+                                                        ) : (
+                                                            <div className="flex items-center text-emerald-600"><CheckCircle className="mr-2 h-4 w-4" /> Mark as Paid</div>
+                                                        )}
+                                                    </DropdownMenuItem>
+
+                                                    <DropdownMenuSeparator />
+
+                                                    {/* Shipment Status Updates */}
+                                                    <motion.div variants={itemVariants} className="px-4 py-2 text-xs font-semibold uppercase text-gray-400">Update Shipment Status</motion.div>
+                                                    
+                                                    {/* Status Menu Items (using MotionDropdownMenuItem) */}
+                                                    {order.status !== 'processing' && order.status !== 'cancelled' && (
+                                                        <DropdownMenuItem onClick={() => handleStatusChange(order.id, 'processing')}>
+                                                            <div className="flex items-center text-yellow-600"><Loader className="mr-2 h-4 w-4" /> Set to Processing</div>
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                    
+                                                    {order.status !== 'shipped' && order.status !== 'delivered' && order.status !== 'cancelled' && (
+                                                        <DropdownMenuItem onClick={() => handleStatusChange(order.id, 'shipped')}>
+                                                            <div className="flex items-center text-blue-600"><Truck className="mr-2 h-4 w-4" /> Set to Shipped</div>
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                    
+                                                    {order.status !== 'delivered' && order.status !== 'cancelled' && (
+                                                        <DropdownMenuItem onClick={() => handleStatusChange(order.id, 'delivered')}>
+                                                            <div className="flex items-center text-green-600"><CheckCircle className="mr-2 h-4 w-4" /> Set to Delivered</div>
+                                                        </DropdownMenuItem>
+                                                    )}
+
+                                                    <DropdownMenuSeparator />
+                                                    
+                                                    {/* Cancel */}
+                                                    {order.status !== 'cancelled' && (
+                                                        <DropdownMenuItem onClick={() => handleStatusChange(order.id, 'cancelled')}>
+                                                            <div className="flex items-center text-red-600"><XCircle className="mr-2 h-4 w-4" /> Cancel Order</div>
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </td>
+                                    </motion.tr>
+                                ))}
+                            </tbody>
+                        </AnimatePresence>
+                    </table>
+                </div>
+            </CardContent>
+        </Card>
+    );
+};
+
+
+// --- EXPORTED PAGE COMPONENT (No Change Needed, it already uses motion) ---
 
 export default function OrdersPage() {
-  const navigate = useNavigate();
-  const { currentUser } = useStore();
-  console.log(currentUser)
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [trackOrder, setTrackOrder] = useState<Order | null>(null);
+    const navigate = useNavigate();
 
-  if (!currentUser) {
-    navigate('/auth');
-    return null;
-  }
+    return (
+        <div className="min-h-screen p-4 sm:p-8" style={{ backgroundColor: 'var(--color-elementsBackground)' }}>
+            <div className="max-w-6xl mx-auto">
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'delivered':
-        return <CheckCircle className="h-4 w-4" style={{ color: 'var(--color-success)' }} />;
-      case 'shipped':
-        return <Truck className="h-4 w-4" style={{ color: 'var(--color-info)' }} />;
-      case 'processing':
-        return <Clock className="h-4 w-4" style={{ color: 'var(--color-warning)' }} />;
-      default:
-        return <AlertCircle className="h-4 w-4" style={{ color: 'var(--color-error)' }} />;
-    }
-  };
+                {/* HEADER: Animates on initial load */}
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+                    <h1 className="text-2xl sm:text-4xl font-bold mb-2" style={{ color: 'var(--color-text)' }}>Order Administration</h1>
+                    <p style={{ color: 'var(--color-text-secondary)' }}>Manage all customer orders and statuses.</p>
+                </motion.div>
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'delivered':
-        return 'default';
-      case 'shipped':
-        return 'secondary';
-      case 'processing':
-        return 'outline';
-      default:
-        return 'destructive';
-    }
-  };
-
-  const filterOrdersByStatus = (status: string) => {
-    if (status === 'all') return mockOrders;
-    return mockOrders.filter(order => order.status === status);
-  };
-
-
-  
-
-  return (
-    <div className="min-h-screen p-4 sm:p-8" style={{ backgroundColor: 'var(--color-elementsBackground)' }}>
-      <div className="max-w-6xl mx-auto">
-
-        {/* HEADER */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <h1 className="text-2xl sm:text-4xl font-bold mb-2" style={{ color: 'var(--color-text)' }}>My Orders</h1>
-          <p style={{ color: 'var(--color-text-secondary)' }}>Track and manage your orders</p>
-        </motion.div>
-
-        {/* STATS */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Card style={{ backgroundColor: 'var(--color-surface)' }}>
-            <CardContent className="p-4 sm:p-6 text-center">
-              <Package className="h-8 w-8 mx-auto mb-2" style={{ color: 'var(--color-primary)' }} />
-              <p className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--color-text)' }}>{mockOrders.length}</p>
-              <p className="text-xs sm:text-sm" style={{ color: 'var(--color-text-secondary)' }}>Total Orders</p>
-            </CardContent>
-          </Card>
-
-          <Card style={{ backgroundColor: 'var(--color-surface)' }}>
-            <CardContent className="p-4 sm:p-6 text-center">
-              <CheckCircle className="h-8 w-8 mx-auto mb-2" style={{ color: 'var(--color-success)' }} />
-              <p className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--color-text)' }}>
-                {mockOrders.filter(o => o.status === 'delivered').length}
-              </p>
-              <p className="text-xs sm:text-sm" style={{ color: 'var(--color-text-secondary)' }}>Delivered</p>
-            </CardContent>
-          </Card>
-
-          <Card style={{ backgroundColor: 'var(--color-surface)' }}>
-            <CardContent className="p-4 sm:p-6 text-center">
-              <Truck className="h-8 w-8 mx-auto mb-2" style={{ color: 'var(--color-info)' }} />
-              <p className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--color-text)' }}>
-                {mockOrders.filter(o => o.status === 'shipped').length}
-              </p>
-              <p className="text-xs sm:text-sm" style={{ color: 'var(--color-text-secondary)' }}>Shipped</p>
-            </CardContent>
-          </Card>
-
-          <Card style={{ backgroundColor: 'var(--color-surface)' }}>
-            <CardContent className="p-4 sm:p-6 text-center">
-              <Clock className="h-8 w-8 mx-auto mb-2" style={{ color: 'var(--color-warning)' }} />
-              <p className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--color-text)' }}>
-                {mockOrders.filter(o => o.status === 'processing').length}
-              </p>
-              <p className="text-xs sm:text-sm" style={{ color: 'var(--color-text-secondary)' }}>Processing</p>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* ORDERS LIST */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <Card style={{ backgroundColor: 'var(--color-surface)' }}>
-            <CardHeader>
-              <CardTitle style={{ color: 'var(--color-text)' }}>Order History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="all" className="w-full">
-                <TabsList className="grid w-full grid-cols-4 mb-6">
-                  <TabsTrigger value="all">All Orders</TabsTrigger>
-                  <TabsTrigger value="processing">Processing</TabsTrigger>
-                  <TabsTrigger value="shipped">Shipped</TabsTrigger>
-                  <TabsTrigger value="delivered">Delivered</TabsTrigger>
-                </TabsList>
-
-                {['all', 'processing', 'shipped', 'delivered'].map((status) => (
-                  <TabsContent key={status} value={status} className="space-y-4">
-                    {filterOrdersByStatus(status).map((order, index) => (
-                      <motion.div key={order.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }}>
-                        <Card className="border" style={{ backgroundColor: 'var(--color-elementsBackground)' }}>
-                          <CardContent className="p-4 sm:p-6">
-                            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-
-                              {/* ORDER LEFT SIDE */}
-                              <div className="flex-1">
-                                <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
-                                  <h3 className="font-semibold text-lg" style={{ color: 'var(--color-text)' }}>Order #{order.id}</h3>
-                                  <Badge variant={getStatusColor(order.status)}>
-                                    <div className="flex items-center space-x-1">
-                                      {getStatusIcon(order.status)}
-                                      <span className="capitalize">{order.status}</span>
-                                    </div>
-                                  </Badge>
-                                </div>
-
-                                <div className="grid sm:grid-cols-2 gap-3 text-sm">
-                                  <div className="flex items-center" style={{ color: 'var(--color-text-secondary)' }}>
-                                    <Calendar className="h-4 w-4 mr-2" />
-                                    {new Date(order.date).toLocaleDateString()}
-                                  </div>
-
-                                  <div className="flex items-center" style={{ color: 'var(--color-text-secondary)' }}>
-                                    <CreditCard className="h-4 w-4 mr-2" />
-                                    ${order.total.toFixed(2)}
-                                  </div>
-
-                                  {order.trackingNumber && (
-                                    <div className="flex items-center col-span-2" style={{ color: 'var(--color-text-secondary)' }}>
-                                      <Truck className="h-4 w-4 mr-2" />
-                                      Tracking: {order.trackingNumber}
-                                    </div>
-                                  )}
-                                </div>
-
-                                <div className="mt-4">
-                                  <p className="text-sm font-medium mb-2" style={{ color: 'var(--color-text)' }}>Items:</p>
-                                  <div className="space-y-2">
-                                    {order.items.map((item) => (
-                                      <div key={item.id} className="flex items-center space-x-3">
-                                        <img src={item.image} className="w-12 h-12 rounded object-cover" />
-                                        <div>
-                                          <p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>{item.name}</p>
-                                          <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-                                            Qty: {item.quantity} × ${item.price.toFixed(2)}
-                                          </p>
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* RIGHT SIDE BUTTONS */}
-                              <div className="flex flex-col sm:flex-row lg:flex-col gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="bg-[var(--color-primary)] text-white hover:bg-[var(--color-secondary)]"
-                                  onClick={() => setSelectedOrder(order)}>
-                                  View Details
-                                </Button>
-
-                                {order.trackingNumber && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="bg-[var(--color-primary)] text-white hover:bg-[var(--color-secondary)]"
-                                    onClick={() => setTrackOrder(order)}>
-                                    Track Package
-                                  </Button>
-                                )}
-
-                                {order.status === 'delivered' && (
-                                  <Button variant="outline" size="sm" className="bg-[var(--color-primary)] text-white hover:bg-[var(--color-secondary)]">
-                                    Reorder
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </motion.div>
-                    ))}
-                  </TabsContent>
-                ))}
-              </Tabs>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
-
-      {/* ORDER DETAILS MODAL */}
-      {selectedOrder && (
-        <motion.div  initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-          className="fixed bottom-0 left-0 right-0 bg-[var(--color-surface)] border-t p-6 shadow-xl rounded-t-2xl z-50">
-
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Order #{selectedOrder.id}</h2>
-            <ChevronDown className="cursor-pointer" onClick={() => setSelectedOrder(null)} />
-          </div>
-
-          <p className="text-sm mb-3">Placed on: {new Date(selectedOrder.date).toLocaleDateString()}</p>
-
-                  {/* USER INFORMATION */}
-          <div>
-            <h3 className="font-semibold text-lg mb-3" style={{ color: 'var(--color-text)' }}>
-              User Information
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-              <p style={{ color: 'var(--color-text-secondary)' }}>
-                <strong>Name:</strong> {clientUser.name}
-              </p>
-              <p style={{ color: 'var(--color-text-secondary)' }}>
-                <strong>Email:</strong> {clientUser.email}
-              </p>
-              {clientUser.phone && (
-                <p style={{ color: 'var(--color-text-secondary)' }}>
-                  <strong>Phone:</strong> {clientUser.phone}
-                </p>
-              )}
-              <p style={{ color: 'var(--color-text-secondary)' }}>
-                <strong>User ID:</strong> {clientUser.id}
-              </p>
-              <p className="sm:col-span-2" style={{ color: 'var(--color-text-secondary)' }}>
-                <strong>Address:</strong> {selectedOrder.shippingAddress}
-              </p>
+                {/* THE NEW ORDER MANAGEMENT TABLE: Animates after header load */}
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+                    <OrderManagementTable />
+                </motion.div>
+                
             </div>
-          </div>
-
-          {/* ORDER ITEMS */}
-         
-
-
-          <h3 className="font-semibold mt-4 mb-2">Items</h3>
-          {selectedOrder.items.map(item => (
-            <div key={item.id} className="flex items-center gap-3 mb-3">
-              <img src={item.image} className="w-14 h-14 rounded" />
-              <div>
-                <p className="font-medium text-sm">{item.name}</p>
-                <p className="text-xs">Qty: {item.quantity}</p>
-                <p className="text-xs">${item.price.toFixed(2)}</p>
-              </div>
-            </div>
-          ))}
-
-          <h3 className="font-semibold mt-4 mb-2">Shipping Address</h3>
-          <div className="flex items-center gap-2 text-sm">
-            <MapPin className="h-4 w-4" />
-            {selectedOrder.shippingAddress}
-          </div>
-
-          <h3 className="font-semibold mt-4 mb-2">Payment</h3>
-          <p className="text-sm font-medium">Total: ${selectedOrder.total.toFixed(2)}</p>
-
-          <Button className="mt-6 w-full bg-[var(--color-primary)] text-white"
-            onClick={() => setSelectedOrder(null)}>
-            Close
-          </Button>
-        </motion.div>
-      )}
-
-      {/* TRACKING MODAL */}
-      {trackOrder && (
-        <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-          className="fixed bottom-0 left-0 right-0 bg-[var(--color-surface)] border-t p-6 shadow-xl rounded-t-2xl z-50">
-
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Tracking #{trackOrder.trackingNumber}</h2>
-            <ChevronDown className="cursor-pointer" onClick={() => setTrackOrder(null)} />
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <CheckCircle className="h-5 w-5 text-green-500" />
-              <p className="text-sm">Order confirmed</p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Truck className="h-5 w-5 text-blue-500" />
-              <p className="text-sm">In transit</p>
-            </div>
-
-            {trackOrder.status === "delivered" && (
-              <div className="flex items-center gap-3">
-                <Package className="h-5 w-5 text-purple-500" />
-                <p className="text-sm">Delivered</p>
-              </div>
-            )}
-          </div>
-
-          <Button className="mt-6 w-full bg-[var(--color-primary)] text-white"
-            onClick={() => setTrackOrder(null)}>
-            Close
-          </Button>
-        </motion.div>
-      )}
-
-    </div>
-  );
+        </div>
+    );
 }

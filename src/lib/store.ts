@@ -182,9 +182,9 @@ interface StoreState {
   // Search
   searchQuery: string;
   
-
-   
-
+ // order Actions
+   addOrder : (productInfo : object,userInfo : object)=>void;
+   updateOrder : (OrderState)=>void;
   // Product actions
   addProduct: (product: Omit<Product, 'id' | 'reviews'>) => void;
   updateProduct: (id: string, product: Partial<Product>) => void;

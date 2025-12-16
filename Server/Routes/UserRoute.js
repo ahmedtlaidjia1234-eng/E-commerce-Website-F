@@ -185,7 +185,7 @@ router.post("/login", async (req, res) => {
     }
  
     // 3. Successful login response (DO NOT send password)
-    const authUser = await User.update({ auth : true  }, {where : {email}});
+    const authUser = await User.update({ auth : true , firstTimeLog }, {where : {email}});
     if(!authUser){
       return res.status(401).json({ message: "Something Wrong" });
     }
@@ -219,20 +219,6 @@ const token = jwt.sign(
     res.status(500).json({ error: "Internal server error" });
   }
 });
-
-router.put('/login/applyFirstTimeLog', async (req,res)=>{
-  try{
-    const {id , firstTimeLog} = req.body
-    console.log({id,firstTimeLog})
-    const updateUser = await User.update({firstTimeLog},{where : {id}})
-    if(updateUser){
-      res.status(200).json(updateUser)
-    }
-  }catch(err){
-    console.log(err) 
-    res.status(500).json(err)
-  }
-})
 
 router.put("/logout", async (req, res) => {
   try {
@@ -286,7 +272,7 @@ router.put("/EditUserSettings", async (req, res) => {
   }catch(err){
     res.status(500).json(err)
   }
-  
+    
 });
 
 

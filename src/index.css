@@ -24,7 +24,33 @@
   /* --radius : '24px'; */
 }
 
+.animatedNav{
+  animation: forwards 0.3s ease animatedNav;
+  
+}
 
+.image-wrapper {
+  position: relative;
+  min-height: 100vh;
+}
+
+.background-image {
+  position: absolute;
+  inset: 0;
+  background-image: url("https://img.freepik.com/vecteurs-libre/modele-sans-couture-jeu-peripherique-informatique_1284-51634.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: grayscale(100%);
+  opacity: 0.2;
+  z-index: 0;
+}
+
+
+@keyframes animatedNav {
+    from {top: -100px;}
+  to {top: 0px;}
+}
 
 ::selection {
   background-color: var(--color-accent);
