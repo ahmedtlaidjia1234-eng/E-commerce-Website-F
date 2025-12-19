@@ -238,11 +238,11 @@ router.put("/logout", async (req, res) => {
 });
 
 
-router.post("/deleteUser" , async (req, res) => {
+router.post("/deleteUser", async (req, res) => {
   try{
      const { email } = req.body;
  
-console.log(email)
+
   const deletedUser = await User.destroy({ where: { email } });
   // const deletedUser = true
   if (deletedUser) {

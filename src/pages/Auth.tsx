@@ -14,7 +14,7 @@ import cookie from 'universal-cookie';
 import { set } from 'react-hook-form';
 import {jwtDecode} from "jwt-decode";
 import Cookies from 'universal-cookie';
-
+import { URL } from '@/lib/BackendURL';
 
 interface LocationState {
   from?: {
@@ -170,50 +170,55 @@ export default function AuthPage() {
   };
   
   
-  const handleSignUp = async (e: React.FormEvent) => {
+  const generateVerificationCode = (): string => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+const handleSignUp = async (e: React.FormEvent) => {
   e.preventDefault();
 
   if (signUpData.password !== signUpData.confirmPassword) {
-    useStore.getState().addNotification('Passwords do not match!', 'error'); 
+    useStore.getState().addNotification(
+      "Passwords do not match!",
+      "error"
+    );
     return;
   }
 
   if (!agreeToTerms) {
-    useStore.getState().addNotification('Please agree to terms and conditions!', 'error');
+    useStore.getState().addNotification(
+      "Please agree to terms and conditions!",
+      "error"
+    );
     return;
   }
 
-  // ✅ Generate 6-digit verification code
-  const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-
-  // ✅ Store temporarily (FRONTEND ONLY - for real apps use backend)
-  // sessionStorage.setItem('verificationCode', verificationCode);
-  // sessionStorage.setItem('pendingUser', JSON.stringify(signUpData));
-  try{
-  //  const Code = await axios.post('http://localhost:5000/api/user/verification/addCode',{
-  //     email : signUpData.email,
-  //     code : verificationCode
-  //   });
-   signUp(signUpData)
-    // const {confirmPassword, ...userWithoutConfirm} = signUpData;
-    // sessionStorage.setItem('User', JSON.stringify(signUpData));
-   
+  // ✅ ALWAYS generate a fresh code on each run
+  const verificationCode = generateVerificationCode();
+  // sessionStorage.setItem('verificationCode', verificationCode); 
+  sessionStorage.setItem('pendingUser', JSON.stringify(signUpData));
+// console.log(verificationCode)
+  try {
+    const response = await axios.post(
+      `${URL}/api/user/verification/addCode`,
+      {
+        email: signUpData.email,
+        code: verificationCode,
+        createdAt: Date.now(), // helps backend invalidate old codes
+      }
+    );
   
-  // signUp(userWithoutConfirm);
-    
-    // setIsAuth(true);
-    // console.log(Code.data);
- 
-  }catch(err){
-    console.log(err);
+
+    if (response.status === 201) {
+      console.log("Verification code sent successfully");
+
+      navigate("/verify-email", {
+        state: { email: signUpData.email },
+      });
+    }
+  } catch (err) {
+    console.error("Verification error:", err);
   }
-
-  // console.log('DEV VERIFICATION CODE:', verificationCode); // remove in production
-
-  // ✅ Redirect to verification page
-  // navigate('/verify-email', {
-  //   state: { email: signUpData.email }
-  // });
 };
 const cookies = new cookie();
 

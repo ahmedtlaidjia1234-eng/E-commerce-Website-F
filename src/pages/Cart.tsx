@@ -7,11 +7,11 @@ import { Separator } from '@/components/ui/separator';
 import { useStore } from '@/lib/store';
 
 export default function CartPage() {
-  const { cart, updateCartQuantity, removeFromCart, clearCart } = useStore();
-  
+  const { cart, updateCartQuantity, removeFromCart, clearCart,websiteSettings } = useStore();
+    const taxRate = websiteSettings.settings.commerce.taxRate;
   const subtotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-  const shipping = subtotal > 50 ? 0 : 9.99;
-  const tax = subtotal * 0.08;
+  const shipping = subtotal > 50 ? 0 : taxRate;
+  const tax = (subtotal * taxRate) / 100;
   const total = subtotal + shipping + tax;
   const Productdata = cart.find(p=> p.product.price == subtotal)?.product
   console.log()

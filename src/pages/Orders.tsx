@@ -44,7 +44,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useStore } from '@/lib/store';
-import numpy from 'numpy';
+import JSZip from "jszip";
+import { StyledWrapper } from '@/components/ui/loader';
 
 interface OrderItem {
   id: string;
@@ -169,7 +170,7 @@ const mockOrders: Order[] = [
 
 export default function OrdersPage() {
   const navigate = useNavigate();
-  const { currentUser, getOrders,orders,users,isAdmin, updateOrders,addNotification,deleteOrders } = useStore();
+  const { currentUser, getOrders,orders,users,getUsers,isAdmin, updateOrders,addNotification,deleteOrders } = useStore();
 //   const [orders, setOrders] = useState<Order[]>(ordersData);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
@@ -180,6 +181,7 @@ export default function OrdersPage() {
   const [sortBy, setSortBy] = useState('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [refresh,setRefresh]=useState(true)
 
   if (!currentUser) {
     navigate('/auth');
@@ -227,11 +229,21 @@ export default function OrdersPage() {
 
   useEffect(()=>{
     getOrders()
+    getUsers()
   },[])
+
+  const handleRufresh= async (time) => {
+    setRefresh(false);
+    getOrders();
+    setTimeout(() => {
+      setRefresh(true)
+    }, time);
+  }
+
 
  const filteredOrders = orders?.filter(order => {
   // 1️⃣ Filter by current user if not admin
-  if (!currentUser.isAdmin && order.userId !== currentUser.id) {
+  if (!currentUser.isAdmin && order.customerid !== currentUser.id) {
     return false;
   }
 
@@ -288,6 +300,7 @@ export default function OrdersPage() {
 
 const handleViewOrder = (order: Order) => {
   const user = users.find(v => v.id === order.customerid);
+
   if (!user) {
     console.error("User not found for order", order);
     return;
@@ -330,11 +343,63 @@ const handleViewOrder = (order: Order) => {
     }
   };
 
-  const exportOrdersToCSV = (orders: Order[]) => {
+const exportOrdersToCSV = async (orders: Order[]) => {
   if (!orders || orders.length === 0) return;
 
-  // CSV Header
-  const headers = [
+  const zip = new JSZip();
+
+  /* =======================
+     ITEMS CSV
+  ======================= */
+
+  const itemHeaders = [
+    "id",
+    "name of item",
+    "final price",
+    "garanti",
+    "quantity",
+  ];
+
+  let itemIdCounter = 1;
+  const itemRows: string[][] = [];
+
+  // Map orderId -> itemIds[]
+  const orderItemMap = new Map<string, number[]>();
+
+  orders.forEach(order => {
+    const ids: number[] = [];
+
+    order.items.forEach(item => {
+      const itemId = itemIdCounter++;
+
+      ids.push(itemId);
+
+      itemRows.push([
+        String(itemId),
+        item.product.Name,
+        String(item.product.price),
+        String(item.product.garanty ?? "N/A"),
+        String(item.quantity),
+      ]);
+    });
+
+    orderItemMap.set(order.id, ids);
+  });
+
+  const itemsCSV = [
+    itemHeaders.join(","),
+    ...itemRows.map(row =>
+      row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")
+    ),
+  ].join("\n");
+
+  zip.file("items.csv", itemsCSV);
+
+  /* =======================
+     ORDERS CSV (UNCHANGED)
+  ======================= */
+
+  const orderHeaders = [
     "Order ID",
     "Customer Name",
     "Customer Email",
@@ -346,45 +411,43 @@ const handleViewOrder = (order: Order) => {
     "Items",
     "Shipping Address",
     "Billing Address",
+    "Notes"
   ];
 
-  // Convert orders to CSV rows
-  const rows = orders.map(order => {
-    const itemsText = order.items
-      .map(item => `${item.product.name} (x${item.quantity}) - $${item.product.price}`)
-      .join(" | ");
+  const orderRows = orders.map(order => [
+    order.id,
+    order.customerName,
+    order.customerEmail,
+    (order.customerPhone).toString(),
+    order.Status,
+    new Date(order.createdAt).toDateString(),
+    order.total,
+    order.paymentMethod || "N/A",
+    orderItemMap.get(order.id)?.join("|") || "",
+    JSON.stringify(order.shippingAddress),
+    JSON.stringify(order.billingAddress),
+    order.note ? order.note.replace(/\n/g, " ") : "",
+  ]);
 
-
-    return [
-      order.id,
-      order.customerName,
-      order.customerEmail,
-      order.customerPhone,
-      order.Status,
-      new Date(order.createdAt).toDateString(),
-      order.total,
-      order.paymentMethod || "N/A",
-      JSON.stringify(order.items),
-      JSON.stringify(order.shippingAddress),
-      JSON.stringify(order.billingAddress),
-    ];
-  });
-
-  // Combine header + rows
-  const csvContent = [
-    headers.join(","), 
-    ...rows.map(row =>
-      row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(",")
-    )
+  const ordersCSV = [
+    orderHeaders.join(","),
+    ...orderRows.map(row =>
+      row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")
+    ),
   ].join("\n");
 
-  // Create file & trigger download
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  zip.file("orders.csv", ordersCSV);
+
+  /* =======================
+     DOWNLOAD ZIP
+  ======================= */
+
+  const blob = await zip.generateAsync({ type: "blob" });
   const url = URL.createObjectURL(blob);
 
   const link = document.createElement("a");
   link.href = url;
-  link.setAttribute("download", `orders_${Date.now()}.csv`);
+  link.download = "Orders.zip";
   document.body.appendChild(link);
   link.click();
 
@@ -417,7 +480,7 @@ const handleViewOrder = (order: Order) => {
     shipped: filteredOrders?.filter(o => o.Status === 'shipped').length,
     delivered: filteredOrders?.filter(o => o.Status === 'delivered').length,
     cancelled: filteredOrders?.filter(o => o.Status === 'cancelled').length,
-    revenue: filteredOrders?.reduce((sum, order) => sum + Number(order.total), 0).toFixed(2),
+    revenue: filteredOrders?.reduce((sum, order) => sum + Number(order.total), 0),
   };
 
   return (
@@ -446,7 +509,7 @@ const handleViewOrder = (order: Order) => {
                   <Download className="h-4 w-4 mr-2" />
                   Export
                 </Button>
-                <Button variant="outline" size="sm" onClick={()=>{getOrders()}}>
+                <Button  variant="outline" size="sm" onClick={()=>{handleRufresh(1000)}}>
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Refresh
                 </Button>
@@ -513,7 +576,7 @@ const handleViewOrder = (order: Order) => {
           <Card style={{ backgroundColor: 'var(--color-surface)' }}>
             <CardContent className="p-4 text-center">
               <CreditCard className="h-6 w-6 mx-auto mb-2" style={{ color: 'var(--color-success)' }} />
-              <p className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>${orderStats?.revenue}</p>
+              <p className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>DZD {orderStats?.revenue}</p>
               <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>Revenue</p>
             </CardContent>
           </Card>
@@ -571,7 +634,10 @@ const handleViewOrder = (order: Order) => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                    onClick={() => { 
+                      handleRufresh(300);
+                      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
+                    }}
                   >
                     {sortOrder === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                   </Button>
@@ -607,7 +673,14 @@ const handleViewOrder = (order: Order) => {
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
+
+                  
+                  
+                  
+                 
+                    {
+                      refresh &&
+                    <TableBody>
                     <AnimatePresence>
                       {filteredOrders?.map((order, index) => (
                         <motion.tr
@@ -666,7 +739,7 @@ const handleViewOrder = (order: Order) => {
                           
                           <TableCell>
                             <span className="font-medium" style={{ color: 'var(--color-text)' }}>
-                              ${order.total}
+                              DZD {order.total}
                             </span>
                           </TableCell>
                           
@@ -712,7 +785,18 @@ const handleViewOrder = (order: Order) => {
                       ))}
                     </AnimatePresence>
                   </TableBody>
+                  }
+                   
+                  
                 </Table>
+                {
+                  !refresh &&
+                  <div className='flex justify-center w-full'>
+                   <StyledWrapper className='items-center flex' style={{height : '200px' , width : '100%'}}>
+                     <div className='loader'></div>
+                   </StyledWrapper>
+                 </div>
+                }
               </div>
               
               {filteredOrders?.length === 0 && (
@@ -819,7 +903,7 @@ const handleViewOrder = (order: Order) => {
             </div>
 
             <p className="font-medium">
-              ${(product.price * item.quantity).toFixed(2)}
+              DZD {(product.price * item.quantity).toFixed(2)}
             </p>
           </div>
         ))}
@@ -829,7 +913,7 @@ const handleViewOrder = (order: Order) => {
           <div className="flex justify-between pt-2 border-t font-semibold">
             <span>Item Total</span>
             <span>
-              $
+              DZD
               {products
                 .reduce(
                   (sum, product) =>
@@ -850,13 +934,13 @@ const handleViewOrder = (order: Order) => {
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-semibold">Total:</span>
                       <span className="text-xl font-bold" style={{ color: 'var(--color-primary)' }}>
-                        ${selectedOrder.total}
+                        DZD {selectedOrder.total}
                       </span>
                     </div>
                   </div>
                 </div>
                 
-                {selectedOrder.note && (
+                {(selectedOrder.note && currentUser.isAdmin) && (
                   <div>
                     <h3 className="font-semibold mb-3">Notes</h3>
                     <p className="text-sm p-3 rounded-lg" style={{ backgroundColor: 'var(--color-background)' }}>

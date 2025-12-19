@@ -48,12 +48,13 @@ export default function CheckoutPage() {
       return;
     }
 
-    navigator.geolocation.getCurrentPosition(
+   if(navigator.geolocation) navigator.geolocation.getCurrentPosition(
       (position) => {
         // setUserLocation({
         //   latitude: position.coords.latitude,
         //   longitude: position.coords.longitude,
         // });
+        
         
         setBillingInfo((prev)=>({...prev,
   shippingAddress : 
@@ -90,8 +91,8 @@ fetchUserLocation()
   Status: 'pending',
   total: total,
   items: cart,
-  shippingAddress: userLocation,
-  billingAddress: userLocation,
+  shippingAddress: currentUser.city,
+  billingAddress: currentUser.city,
   trackingNumber: getRandomSixDigitNumber(),
   paymentMethod: 'Payment upon receipt',
   });
@@ -138,7 +139,7 @@ const updated = {...billingInfo}
 
 // const productItems = cart
 // console.log(productItems)
-      addOrder(updated)
+    if(addOrder(updated)) handleSubmit() 
 
 // axios.post(`${URL}`, {
 //         "amount": 10000,
@@ -165,7 +166,7 @@ const updated = {...billingInfo}
 //     }).catch((error) => {
 //         console.log(error);
 //     });
-handleSubmit()
+
 
     }catch(err){
       console.log(err)
@@ -460,16 +461,16 @@ handleSubmit()
                     {cart.map((item) => (
                       <div key={item.product.id} className="flex items-center space-x-3">
                         <img
-                          src={item.product.image}
-                          alt={item.product.name}
+                          src={item.product.img}
+                          alt={item.product.Name}
                           className="w-12 h-12 object-cover rounded"
                         />
                         <div className="flex-1">
-                          <p className="font-medium text-sm">{item.product.name}</p>
+                          <p className="font-medium text-sm">{item.product.Name}</p>
                           <p className="text-gray-600 text-sm">Qty: {item.quantity}</p>
                         </div>
                         <p className="font-semibold">
-                          ${(item.product.price * item.quantity).toFixed(2)}
+                          DZD{(item.product.price * item.quantity).toFixed(2)}
                         </p>
                       </div>
                     ))}
@@ -481,7 +482,7 @@ handleSubmit()
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span>Subtotal</span>
-                      <span>${subtotal.toFixed(2)}</span>
+                      <span>{subtotal.toFixed(2)}</span>
                     </div>
                     
                     <div className="flex justify-between">
@@ -490,7 +491,7 @@ handleSubmit()
                         {shipping === 0 ? (
                           <span className="text-green-600">Free</span>
                         ) : (
-                          `$${shipping.toFixed(2)}`
+                          `DZD${shipping.toFixed(2)}`
                         )}
                       </span>
                     </div>
@@ -504,7 +505,7 @@ handleSubmit()
                     
                     <div className="flex justify-between text-lg font-bold">
                       <span>Total</span>
-                      <span>${total.toFixed(2)}</span>
+                      <span>DZD{total.toFixed(2)}</span>
                     </div>
                   </div>
                   
@@ -516,7 +517,7 @@ handleSubmit()
                     // onClick={()=> handlePayment}
                   >
                     <Lock className="h-4 w-4 mr-2" />
-                    {isProcessing ? 'Processing...' : `Pay $${total.toFixed(2)}`}
+                    {isProcessing ? 'Processing...' : `Order DZD${total.toFixed(2)}`}
                   </Button>
                   
                   <div className="text-center text-xs text-gray-600">

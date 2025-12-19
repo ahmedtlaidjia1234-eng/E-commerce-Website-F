@@ -29,8 +29,8 @@ const allowedOrigins = [
 //   "https://ahmedtl.com",
 //   "https://www.ahmedtl.com",
   "http://localhost:5173", 
-  "https://e-commerce-website-f.vercel.app",
-  "*"
+  "*",
+ "https://e-commerce-website-f.vercel.app"
 ];
 
 // Middleware

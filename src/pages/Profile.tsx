@@ -146,7 +146,7 @@ const cookies = new Cookies()
 
 const [settings, setSettings] = useState({
   });
-
+ 
 
   const deleteAccountAlert = async()=>{
     if(confirm('are you sure you want to delete your account ?')){

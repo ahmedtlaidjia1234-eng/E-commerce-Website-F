@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { LogIn, ShieldCheck } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import axios from 'axios';
+import { URL } from '@/lib/BackendURL';
 
 export default function VerifyEmailPage() {
   const navigate = useNavigate();
@@ -19,11 +20,12 @@ export default function VerifyEmailPage() {
   const pendingUser = sessionStorage.getItem('pendingUser');
 
   const email = location.state?.email || 'your email';
+ 
 
   const handleVerify = async () => {
  try {
-      const Code = await axios.post('http://localhost:5000/api/user/verification/verifyCode',{
-         email : pendingUser ? JSON.parse(pendingUser).email : '',
+      const Code = await axios.post(`${URL}/api/user/verification/verifyCode`,{
+         email : email ,
           code : code
         });
 
@@ -37,9 +39,8 @@ export default function VerifyEmailPage() {
 
     // ✅ NOW we finally create the account
      signUp(userData);
-    LogIn(userData);
     sessionStorage.clear();
-    navigate('/');
+    navigate('/auth');
 
       }catch(err){
         console.log(err);
