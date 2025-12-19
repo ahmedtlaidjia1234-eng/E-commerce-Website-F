@@ -25,7 +25,7 @@ export default function ProductDetailPage() {
 
   const reviews = websiteSettings?.settings?.features?.enableReviews
   const product = products.find(p => p.id == id);
-  // console.log(products.find(p=> p.id === 6))
+
 
   const navigate = useNavigate()
   if (!product) {
@@ -42,7 +42,7 @@ export default function ProductDetailPage() {
   }
   
   const handleAddToCart = () => {
-    console.log(product)
+    // console.log(product)
     addToCart(product, quantity);
   };
 
@@ -51,6 +51,7 @@ export default function ProductDetailPage() {
       navigate('/auth')
     }else{
       addToWishlist(id);
+     
     }
     
   };
@@ -62,6 +63,8 @@ export default function ProductDetailPage() {
         rating: reviewRating,
         comment: reviewComment,
         date: new Date().toISOString().split('T')[0],
+        productImage : product.img,
+        productName : product.Name
       });
       setReviewerName('');
       setReviewComment('');

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Send, Mail, User, Clock, Reply, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,80 +11,71 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useStore } from '@/lib/store';
 
 interface Message {
-  id: string;
-  name: string;
+  // id: string;
+  Name: string;
   email: string;
   subject: string;
   message: string;
-  date: string;
+  // date: string;
+  createdAt?: string;
   isRead: boolean;
 }
 
 export default function MessagesPage() {
-  const { currentUser, addNotification } = useStore();
+  const { currentUser, addNotification,markMessageAsRead,addMessage,getMessages,messages,deleteMessages} = useStore();
   const isAdmin = currentUser?.isAdmin;
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      name: 'John Doe',
-      email: 'john@example.com',
-      subject: 'Question about product availability',
-      message: 'Hi, I wanted to ask about the wireless headphones. Are they still in stock?',
-      date: '2024-01-15',
-      isRead: false,
-    },
-    {
-      id: '2',
-      name: 'Jane Smith',
-      email: 'jane@example.com',
-      subject: 'Shipping inquiry',
-      message: 'Hello, I placed an order yesterday. When can I expect it to arrive?',
-      date: '2024-01-14',
-      isRead: true,
-    },
-  ]);
-  
+  const [message, setMessages] = useState<Message[]>([]);
+
   const [contactForm, setContactForm] = useState({
-    name: '',
+    Name: '',
     email: '',
     subject: '',
     message: '',
   });
-  
+
+  useEffect(() => {
+    getMessages()
+  },[]);
+
+
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   
   const handleSubmitMessage = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (contactForm.name && contactForm.email && contactForm.subject && contactForm.message) {
+    if (contactForm.Name && contactForm.email && contactForm.subject && contactForm.message) {
       const newMessage: Message = {
-        id: Date.now().toString(),
-        name: contactForm.name,
+        // id: Date.now().toString(),
+        Name: contactForm.Name,
         email: contactForm.email,
         subject: contactForm.subject,
         message: contactForm.message,
-        date: new Date().toISOString().split('T')[0],
+        // date: new Date().toISOString().split('T')[0],
         isRead: false,
       };
+
+      addMessage(newMessage);
       
       setMessages(prev => [newMessage, ...prev]);
-      setContactForm({ name: '', email: '', subject: '', message: '' });
+      setContactForm({ Name: '', email: '', subject: '', message: '' });
       addNotification('Message sent successfully!', 'success');
     }
   };
   
   const markAsRead = (id: string) => {
+    markMessageAsRead(id);
     setMessages(prev => prev.map(msg => 
       msg.id === id ? { ...msg, isRead: true } : msg
     ));
   };
   
   const deleteMessage = (id: string) => {
+    deleteMessages(id);
     setMessages(prev => prev.filter(msg => msg.id !== id));
     addNotification('Message deleted', 'info');
   };
   
-  const unreadCount = messages.filter(msg => !msg.isRead).length;
+  const unreadCount = messages?.filter(msg => !msg.isRead).length;
   
   return (
     <div className="min-h-screen bg-[var(--color-Background)]">
@@ -123,12 +114,12 @@ export default function MessagesPage() {
                 <form onSubmit={handleSubmitMessage} className="space-y-6">
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="name">Your Name</Label>
+                      <Label htmlFor="Name">Your Name</Label>
                       <Input
-                        id="name"
-                        value={contactForm.name}
-                        onChange={(e) => setContactForm(prev => ({ ...prev, name: e.target.value }))}
-                        placeholder="Enter your name"
+                        id="Name"
+                        value={contactForm.Name}
+                        onChange={(e) => setContactForm(prev => ({ ...prev, Name: e.target.value }))}
+                        placeholder="Enter your Name"
                         required
                       />
                     </div>
@@ -202,7 +193,7 @@ export default function MessagesPage() {
                           <div className="flex-1">
                             <div className="flex items-center space-x-2 mb-2">
                               <User className="h-4 w-4 text-gray-500" />
-                              <span className="font-semibold">{message.name}</span>
+                              <span className="font-semibold">{message.Name}</span>
                               <span className="text-gray-500">({message.email})</span>
                               {!message.isRead && (
                                 <Badge variant="destructive" className="text-xs">New</Badge>
@@ -214,7 +205,7 @@ export default function MessagesPage() {
                             
                             <div className="flex items-center text-sm text-gray-500">
                               <Clock className="h-4 w-4 mr-1" />
-                              {message.date}
+                              {message.createdAt && new Date(message.createdAt).toLocaleDateString() }
                             </div>
                           </div>
                           
@@ -235,12 +226,12 @@ export default function MessagesPage() {
                               </DialogTrigger>
                               <DialogContent className="max-w-2xl bg-[var(--color-surface)]">
                                 <DialogHeader>
-                                  <DialogTitle>Message from {message.name}</DialogTitle>
+                                  <DialogTitle>Message from {message.Name}</DialogTitle>
                                 </DialogHeader>
                                 <div className="space-y-4">
                                   <div>
                                     <Label>From</Label>
-                                    <p>{message.name} ({message.email})</p>
+                                    <p>{message.Name} ({message.email})</p>
                                   </div>
                                   <div>
                                     <Label>Subject</Label>
@@ -252,7 +243,7 @@ export default function MessagesPage() {
                                   </div>
                                   <div>
                                     <Label>Date</Label>
-                                    <p>{message.date}</p>
+                                    <p>{message.createdAt && new Date(message.createdAt).toLocaleDateString() }</p>
                                   </div>
                                 </div>
                               </DialogContent>

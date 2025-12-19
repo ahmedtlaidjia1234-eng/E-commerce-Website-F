@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
-import { useState } from 'react';
-import { CreditCard, Lock, MapPin, User, Calendar, Shield } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { CreditCard, Lock, MapPin, User, Calendar, Shield, HandCoins } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,20 +23,77 @@ import axios from 'axios';
 // });
 
 export default function CheckoutPage() {
-  const { currentUser,cart, clearCart, addNotification } = useStore();
-  console.log(currentUser)
+  const { currentUser,cart, clearCart, addOrder,addNotification } = useStore();
+ 
   const navigate = useNavigate();
   
+  const subtotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  const shipping = subtotal > 50 ? 0 : 9.99;
+  // const tax = subtotal * 0.08;
+  const total = subtotal + shipping;
+
+  function getRandomSixDigitNumber() {
+  // Min: 100000, Max: 999999
+  return Math.floor(Math.random() * (999 - 100 + 1)) + 100;
+}
+
+/////////// localisation 
+
+ const [userLocation, setUserLocation] = useState(null);
+  // const [error, setError] = useState(null);
+
+  const fetchUserLocation = () => {
+    if (!navigator.geolocation) {
+      console.log('Geolocation is not supported by your browser');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        // setUserLocation({
+        //   latitude: position.coords.latitude,
+        //   longitude: position.coords.longitude,
+        // });
+        
+        setBillingInfo((prev)=>({...prev,
+  shippingAddress : 
+  {
+    latitude: position.coords.latitude,
+    longitude: position.coords.longitude,
+  }
+  ,
+  billingAddress : 
+    {
+    latitude: position.coords.latitude,
+    longitude: position.coords.longitude,
+  }
+}))
+        // console.log(null);
+      },
+      (err) => {
+        console.log(err.message);
+      }
+    );
+  };
+
+  useEffect(()=>{
+fetchUserLocation()
+  },[])
+  
+//.......................
+
   const [billingInfo, setBillingInfo] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    address: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    country: 'US',
+  customerid: currentUser?.id,
+  customerName: currentUser?.fName + ' ' + currentUser?.lName,
+  customerEmail: currentUser?.email,
+  customerPhone: currentUser?.phone,
+  Status: 'pending',
+  total: total,
+  items: cart,
+  shippingAddress: userLocation,
+  billingAddress: userLocation,
+  trackingNumber: getRandomSixDigitNumber(),
+  paymentMethod: 'Payment upon receipt',
   });
 
 
@@ -77,32 +134,38 @@ export default function CheckoutPage() {
 
 
 
-axios.post(`${URL}`, {
-        "amount": 10000,
-        "contact": "37990d08-fc51-4c32-ad40-1552d13c00d1",
-        "url": "http://localhost:5173/thank-you-page",
-        "items": [
-            {
-                "name": "Seller product",
-                "price": 5000,
-                "quantity": 2
-            }
-        ]
-    }, {
-        headers: {
-            "Accept": "application/json",
-            "Authorization": `ufzz4as6c9j8r53rb49elx1pw73nshl9ch9nvzi1v355gidi5f`
-        }
-    })
-    .then((result) => {
-        let response = result.data;
+const updated = {...billingInfo}
 
-        console.log(response);
-        window.location.href = response.data.url;
-    }).catch((error) => {
-        console.log(error);
-    });
+// const productItems = cart
+// console.log(productItems)
+      addOrder(updated)
 
+// axios.post(`${URL}`, {
+//         "amount": 10000,
+//         "contact": "37990d08-fc51-4c32-ad40-1552d13c00d1",
+//         "url": "http://localhost:5173/thank-you-page",
+//         "items": [
+//             {
+//                 "name": "Seller product",
+//                 "price": 5000,
+//                 "quantity": 2
+//             }
+//         ]
+//     }, {
+//         headers: {
+//             "Accept": "application/json",
+//             "Authorization": `ufzz4as6c9j8r53rb49elx1pw73nshl9ch9nvzi1v355gidi5f`
+//         }
+//     })
+//     .then((result) => {
+//         let response = result.data;
+
+//         console.log(response);
+//         window.location.href = response.data.url;
+//     }).catch((error) => {
+//         console.log(error);
+//     });
+handleSubmit()
 
     }catch(err){
       console.log(err)
@@ -127,10 +190,7 @@ axios.post(`${URL}`, {
   
   const [isProcessing, setIsProcessing] = useState(false);
   
-  const subtotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-  const shipping = subtotal > 50 ? 0 : 9.99;
-  const tax = subtotal * 0.08;
-  const total = subtotal + shipping + tax;
+
   
   if (cart.length === 0) {
     return (
@@ -149,7 +209,6 @@ axios.post(`${URL}`, {
   }
   
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
     setIsProcessing(true);
     
     // Simulate payment processing
@@ -214,7 +273,7 @@ axios.post(`${URL}`, {
     <CardContent className="space-y-4">
 
       {/* Payment Method Selector */}
-      <div>
+      {/* <div>
         <Label>Select Payment Method</Label>
         <Select
           value={paymentInfo.method}
@@ -234,7 +293,7 @@ axios.post(`${URL}`, {
             ))}
           </SelectContent>
         </Select>
-      </div>
+      </div> */}
 
       {/* CARD FORM (Only Show When Selected) */}
       {paymentInfo.method === "card" && (
@@ -375,8 +434,10 @@ axios.post(`${URL}`, {
       )}
 
       <div className="flex items-center space-x-2 text-sm text-gray-600 bg-green-50 p-3 rounded-lg">
-        <Shield className="h-4 w-4 text-green-600" />
-        <span>Your payment information is secure and encrypted</span>
+        {/* <Shield className="h-4 w-4 text-green-600" />
+        <span>Your payment information is secure and encrypted</span> */}
+      <HandCoins className='mr-3 text-[var(--color-primary)]'/>
+      Payment upon receipt
       </div>
     </CardContent>
   </Card>
@@ -434,10 +495,10 @@ axios.post(`${URL}`, {
                       </span>
                     </div>
                     
-                    <div className="flex justify-between">
+                    {/* <div className="flex justify-between">
                       <span>Tax</span>
                       <span>${tax.toFixed(2)}</span>
-                    </div>
+                    </div> */}
                     
                     <Separator />
                     

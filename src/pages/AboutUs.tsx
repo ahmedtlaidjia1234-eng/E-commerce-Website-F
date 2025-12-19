@@ -15,28 +15,28 @@ const SectionContainer = ({ children, className = '' }) => (
 );
 
 export default function AboutUsPage() {
-    const { companyInfo } = useStore();
+    const { companyInfo,websiteSettings } = useStore();
     
     // Fallback data for demonstration if companyInfo is not fully loaded
     const fallbackCompanyInfo = {
-        name: companyInfo?.companyName || 'ShopHub',
-        description: companyInfo?.description || 'We are a leading e-commerce platform dedicated to providing the latest and greatest in high-performance computing and electronics. Our commitment is to quality, innovation, and exceptional customer service.',
-        mission: companyInfo?.mission || 'To empower creators and professionals with cutting-edge technology solutions that drive productivity and innovation worldwide.',
-        vision: companyInfo?.vision || 'To become the global leader in professional computing hardware, recognized for our commitment to quality, sustainability, and technological excellence.',
-        story: companyInfo?.story || 'Founded in 2018 by a team of tech enthusiasts, our journey began with a simple goal: to make powerful computing accessible. From a small garage operation to a multi-national distributor, we have consistently upheld our values of transparency and customer focus. We believe in the power of technology to change the world.',
+        name: websiteSettings?.companyInfo?.companyName || 'ShopHub',
+        description: websiteSettings.companyInfo?.description || 'We are a leading e-commerce platform dedicated to providing the latest and greatest in high-performance computing and electronics. Our commitment is to quality, innovation, and exceptional customer service.',
+        mission: websiteSettings.companyInfo?.mission || 'To empower creators and professionals with cutting-edge technology solutions that drive productivity and innovation worldwide.',
+        vision: websiteSettings.companyInfo?.vision || 'To become the global leader in professional computing hardware, recognized for our commitment to quality, sustainability, and technological excellence.',
+        story: websiteSettings.companyInfo?.story || 'Founded in 2018 by a team of tech enthusiasts, our journey began with a simple goal: to make powerful computing accessible. From a small garage operation to a multi-national distributor, we have consistently upheld our values of transparency and customer focus. We believe in the power of technology to change the world.',
         values: companyInfo?.values || ['Innovation', 'Quality', 'Customer Focus', 'Integrity'],
-        phone: companyInfo?.phone || '+1 (555) 123-4567',
-        email: companyInfo?.email || 'support@shophub.com',
-        location: companyInfo?.location || 'San Francisco, CA, USA',
-        founded: companyInfo?.founded || '2018',
-        employees: companyInfo?.employees || '150+',
+        phone: websiteSettings.companyInfo?.phone || '+1 (555) 123-4567',
+        email: websiteSettings.companyInfo?.email || 'support@shophub.com',
+        location:websiteSettings.companyInfo?.address || 'San Francisco, CA, USA',
+        founded: websiteSettings.companyInfo?.founded || '2018',
+        // employees: companyInfo?.employees || '150+',
     };
 
     const stats = [
         { label: 'Founded', value: fallbackCompanyInfo.founded, icon: <Calendar className="h-6 w-6" /> },
-        { label: 'Team Members', value: fallbackCompanyInfo.employees, icon: <Users2 className="h-6 w-6" /> },
-        { label: 'Global Locations', value: '3+', icon: <MapPin className="h-6 w-6" /> },
-        { label: 'Products Sold', value: '1M+', icon: <Award className="h-6 w-6" /> },
+        // { label: 'Team Members', value: fallbackCompanyInfo.employees, icon: <Users2 className="h-6 w-6" /> },
+        // { label: 'Global Locations', value: '3+', icon: <MapPin className="h-6 w-6" /> },
+        // { label: 'Products Sold', value: '1M+', icon: <Award className="h-6 w-6" /> },
     ];
     
     const teamMembers = [
@@ -104,7 +104,7 @@ export default function AboutUsPage() {
                     initial="initial"
                     animate="animate"
                     variants={{ animate: { transition: { staggerChildren: 0.1 } } }}
-                    className="grid md:grid-cols-4 gap-8"
+                    className="grid md:grid-cols-1 gap-8"
                 >
                     {stats.map((stat, index) => (
                         <motion.div
@@ -210,7 +210,7 @@ export default function AboutUsPage() {
             </SectionContainer>
             
             {/* 5. TEAM SECTION - Grid with Image Focus */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            {/* <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
                 <motion.div variants={fadeInUp} initial="initial" animate="animate" transition={{ delay: 0.9 }} className="text-center mb-12">
                     <h2 className="text-4xl font-bold" style={{ color: 'var(--color-text)' }}>Meet Our Dedicated Team</h2>
                     <Separator className="mt-4 w-24 mx-auto bg-[var(--color-primary)]" />
@@ -241,7 +241,7 @@ export default function AboutUsPage() {
                         </motion.div>
                     ))}
                 </div>
-            </div>
+            </div> */}
             
             {/* 6. CONTACT INFO BLOCK (Full Width, Gradient) */}
             <motion.div 

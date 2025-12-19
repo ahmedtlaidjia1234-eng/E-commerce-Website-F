@@ -50,6 +50,8 @@ export default function Navbar() {
     getWebsiteSettings,
     getCurrentUser,
     addFollower,
+    updateFollower,
+    getWishList,
     getProducts,
     currentUser, 
     cart, 
@@ -95,6 +97,11 @@ export default function Navbar() {
     if(!currentUser) navigate('/')
   },[currentUser])
 
+    useEffect(()=>{
+
+    if(!currentUser) navigate('/')
+  },[])
+
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mobileSearchQuery, setMobileSearchQuery] = useState('');
@@ -103,8 +110,21 @@ export default function Navbar() {
   const wishlistCount = CU?.wishlist?.length || 0;
 
   const enableWishListfromSettings = websiteSettings?.settings?.features?.enableWishlist
-  const wish =(enableWishListfromSettings && currentUser?.userSettings.enableWishlist) || false
-
+  
+  const wishF = ()=> {
+    // if(enableWishListfromSettings == true && currentUser.userSettings.enableWishlist == true) return true;
+    // return false;
+    if(enableWishListfromSettings){
+      if(currentUser?.userSettings?.enableWishList){
+        return true
+      }else{
+        return false
+      }
+    }else{
+      return false
+    }
+  }
+const wish = wishF()
   const location = useLocation()
 
   useEffect(()=>{
@@ -160,10 +180,10 @@ export default function Navbar() {
   useEffect(() => {
     getWebsiteSettings();
     getProducts();
-
+    getWishList()
     const token = cookies.get('secured');
 
-    if (token) {
+    if (token && currentUser) {
       try {
         const decoded = jwtDecode(token);
         if (decoded?.userWP) {
@@ -173,10 +193,37 @@ export default function Navbar() {
         console.error("Invalid or expired token:", err);
       }
     } else {
-      console.log("No token found, user not logged in");
+      signOut(CU?.email);
     }
   }, []);
   // --- END EXISTING LOGIC ---
+
+//   useEffect(()=>{
+//     // console.log(currentUser.firstTimeLog)
+//     if(currentUser && currentUser.firstTimeLog && currentUser.followed == false){
+//       setTimeout(()=>{
+//         if(confirm(`
+//           Welcome to ${websiteSettings?.companyName}.
+
+// We’re glad to have you here. If you would like to stay informed about our latest products, website updates, and company news, you can choose to join our newsletter.
+
+// By subscribing, we may contact you by email whenever we publish a new product or share important updates. We will only use your email for this purpose, and you can unsubscribe at any time.
+
+// If you would like to receive these updates, please confirm that you want to join our newsletter.
+
+// Thank you for visiting ${websiteSettings?.companyName}.
+          
+//           `)){
+//             addFollower(currentUser.email,currentUser.fName)
+//             updateFollower({firstTimeLog : false,followed : true,email : currentUser.email})
+//             getCurrentUser()
+//           }else{
+//             updateFollower({firstTimeLog : false,followed : false,email : currentUser.email})
+//             getCurrentUser()
+//           }
+//       },5000)
+//     }
+//   },[currentUser])
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -262,12 +309,13 @@ export default function Navbar() {
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 className="flex items-center space-x-2"
+                translate='no'
               >
                 <div 
                   className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-white text-base shadow-lg"
                   style={{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))' }}
                 >
-                  S
+                  {(websiteSettings?.companyInfo?.companyName)?.split('')[0].toUpperCase()}
                 </div>
                 <span className="text-xl font-extrabold tracking-tight" style={{ color: 'var(--color-text)' }}>
                   {websiteSettings?.companyInfo?.companyName || 'TechShop'}

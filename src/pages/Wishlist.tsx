@@ -5,11 +5,21 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useStore } from '@/lib/store';
+import { useEffect } from 'react';
 
 export default function WishlistPage() {
-  const { currentUser,websiteSettings, products, removeFromWishlist, addToCart } = useStore();
+  const { currentUser,websiteSettings, getWishList,products, removeFromWishlist, addToCart } = useStore();
   const enableWishListfromSettings = websiteSettings?.settings?.features?.enableWishlist
   const wish =(enableWishListfromSettings && currentUser?.userSettings.enableWishList) || false
+
+useEffect(() => {
+  getWishList();
+}, []);
+
+const removeWishListHandle = async (productId: number) => {
+ removeFromWishlist(productId);
+  getWishList();
+}
 
   if(wish) {
  if (!currentUser) {
@@ -32,10 +42,9 @@ export default function WishlistPage() {
   }
   
   const wishlistProducts = products.filter(product => 
-    currentUser?.wishlist?.includes(product.id)
+    currentUser?.wishlist?.includes((product.id).toString())
   );
 
- 
   
   if (wishlistProducts.length === 0) {
     return (
@@ -97,7 +106,7 @@ export default function WishlistPage() {
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
-                    onClick={() => removeFromWishlist(product.id)}
+                    onClick={() => removeWishListHandle(product.id)}
                     className="absolute top-2 right-2 bg-white p-2 rounded-full shadow-lg text-red-500 hover:bg-red-50"
                   >
                     <Trash2 className="h-4 w-4" />

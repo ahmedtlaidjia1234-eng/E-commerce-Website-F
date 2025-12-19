@@ -5,7 +5,7 @@ import { Helmet } from "react-helmet-async";
 export default function Header() {
 const {websiteSettings} = useStore()
 
-const {metaTitle,metaDesc,metaKeyWords} = websiteSettings?.companyInfo
+const {metaTitle,metaDesc,metaKeyWords} = websiteSettings?.companyInfo || {}
   return (
     <>
       <Helmet>

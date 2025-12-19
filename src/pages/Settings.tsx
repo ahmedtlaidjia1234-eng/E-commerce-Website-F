@@ -1014,7 +1014,7 @@ const companyInfoData = {id : websiteSettings?.companyInfo?.id,...filledCompanyI
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="grid md:grid-cols-2 gap-6">
-                   <div className="translator-safe-container notranslate">
+                   {/* <div className="translator-safe-container notranslate">
   <Label>Currency</Label>
   <Select
     value={settings?.settings?.commerce?.currency}
@@ -1038,7 +1038,7 @@ const companyInfoData = {id : websiteSettings?.companyInfo?.id,...filledCompanyI
       <SelectItem value="DZD">DZD - Algerian dinar</SelectItem>
     </SelectContent>
   </Select>
-</div>
+</div> */}
 
                     <div>
                       <Label htmlFor="taxRate">Tax Rate (%)</Label>
@@ -1072,9 +1072,9 @@ const companyInfoData = {id : websiteSettings?.companyInfo?.id,...filledCompanyI
                         id="defaultShipping"
                         type="number"
                         value={settings.settings.commerce.defaultShippingCost}
-                        onChange={(e) => setSettings(prev => ({ ...prev,settings : {...prev.settings , commerce : {...prev.settings.commerce , defaultShippingCost: parseFloat(e.target.value)}} }))}
+                        onChange={(e) => setSettings(prev => ({ ...prev,settings : {...prev.settings , commerce : {...prev.settings.commerce , defaultShippingCost: e.target.value}} }))}
                         min="0"
-                        step="0.01"
+                        step="1"
                       />
                     </div>
                   </div>

@@ -213,7 +213,7 @@ transition={location.pathname == '/' ? { delay: 2.5, duration: 0.8 } : { delay: 
             </div>
             
             {/* Payment Methods */}
-            <div className="flex items-center space-x-2">
+            {/* <div className="flex items-center space-x-2">
               <span className="text-gray-400 text-sm">We accept:</span>
               <div className="flex space-x-2">
                 {['Visa', 'MC', 'AMEX', 'PayPal'].map((method) => (
@@ -225,7 +225,7 @@ transition={location.pathname == '/' ? { delay: 2.5, duration: 0.8 } : { delay: 
                   </div>
                 ))}
               </div>
-            </div>
+            </div> */}
           </div>
         </motion.div>
       </div>

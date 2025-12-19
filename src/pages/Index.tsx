@@ -262,7 +262,44 @@ export default function HomePage() {
           </div>
         </div>
       </motion.section>
+<motion.div
+  initial={{ opacity: 0, y: 30 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.8, ease: 'easeOut' }}
+  className="relative w-full py-16"
+  style={{ backgroundColor: 'var(--color-Background)' }}
+>
+  <Link to={'/about'}>
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <Card
+      className="overflow-hidden border-0 shadow-2xl"
+      style={{ backgroundColor: 'var(--color-surface)' }}
+    >
+      <div className="relative">
+        <img
+          src="https://i.ibb.co/JWXbJfCJ/9df87ea8c473.png"
+          alt="Our physical store and inventory"
+          className="w-full h-[420px] object-cover"
+        />
 
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+
+        {/* Caption */}
+        <div className="absolute bottom-6 left-6 right-6 text-white">
+          <h3 className="text-3xl font-bold mb-2">
+            Our Physical Store
+          </h3>
+          <p className="max-w-2xl text-lg text-white/90 leading-relaxed">
+            A real location, real products, and a dedicated team committed to
+            delivering quality technology and reliable service every day.
+          </p>
+        </div>
+      </div>
+    </Card>
+  </div>
+  </Link>
+</motion.div>
       {/* NEW: Product Category Showcase Section */}
       <div
       className="image-wrapper"

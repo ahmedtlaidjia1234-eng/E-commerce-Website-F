@@ -132,6 +132,7 @@ export default function ProductsPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
+                    translate='no'
                     className="p-8 rounded-xl shadow-2xl mb-8 sticky top-0 z-10" // Added sticky and high z-index
                     style={{ backgroundColor: 'var(--color-surface)' }}
                 >

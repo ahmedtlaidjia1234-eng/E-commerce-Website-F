@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { useStore } from '@/lib/store';
 
 export default function ReviewsPage() {
-  const { products } = useStore();
+  const { products,updateProducts,updateProduct } = useStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRating, setFilterRating] = useState('all');
   
@@ -18,14 +18,33 @@ export default function ReviewsPage() {
   const allReviews = products.flatMap(product => 
     product.reviews.map(review => ({
       ...review,
-      productName: product.name,
-      productImage: product.image,
+      productName: product.Name,
+      productImage: product.img,
     }))
   );
   
+const handleDeleteReview = (reviewId: string, productId: string) => {
+  // Find the product
+  const updatedProducts = products.map(product => {
+    if (product.id === productId) {
+      return {
+        ...product,
+        reviews: product.reviews.filter(review => review.id !== reviewId)
+      };
+    }
+    return product;
+  });
+console.log(updatedProducts)
+  updatedProducts.map(row=>(
+    updateProduct(row.id,row)
+  ))
+
+  updateProducts(updatedProducts);
+};
+
   const filteredReviews = allReviews
     .filter(review => 
-      review.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      review.productName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       review.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       review.comment.toLowerCase().includes(searchTerm.toLowerCase())
     )
@@ -118,7 +137,7 @@ export default function ReviewsPage() {
                     {products.length > 0 
                       ? products.reduce((prev, current) => 
                           prev.reviews.length > current.reviews.length ? prev : current
-                        ).name
+                        ).Name
                       : 'N/A'
                     }
                   </Badge>
@@ -130,7 +149,7 @@ export default function ReviewsPage() {
                     {products.length > 0 
                       ? products.reduce((prev, current) => 
                           prev.rating > current.rating ? prev : current
-                        ).name
+                        ).Name
                       : 'N/A'
                     }
                   </Badge>
@@ -159,7 +178,7 @@ export default function ReviewsPage() {
           transition={{ delay: 0.4 }}
           className="bg-white p-6 rounded-lg shadow-lg mb-8"
         >
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-2 gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
@@ -184,10 +203,10 @@ export default function ReviewsPage() {
               </SelectContent>
             </Select>
             
-            <Button variant="outline" className="flex items-center bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] text-white hover:text-white">
+            {/* <Button variant="outline" className="flex items-center bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] text-white hover:text-white">
               <Filter className="h-4 w-4 mr-2" />
               More Filters
-            </Button>
+            </Button> */}
           </div>
         </motion.div>
         
@@ -253,6 +272,17 @@ export default function ReviewsPage() {
                           </div>
                           
                           <p className="text-gray-700 leading-relaxed">{review.comment}</p>
+
+                          <div className="flex justify-end mt-2">
+  <Button 
+    variant="outline"
+    size="sm"
+    onClick={() => handleDeleteReview(review.id, review.productId)}
+     className="text-red-600 border-red-500 hover:text-white hover:bg-red-600 hover:border-red-600"
+  >
+    Delete Review
+  </Button>
+</div>
                         </div>
                       </div>
                     </CardContent>

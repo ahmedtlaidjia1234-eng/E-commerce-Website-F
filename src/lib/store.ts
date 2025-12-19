@@ -24,12 +24,27 @@ function convertToDinar(amount, currency) {
   }
 }
 
+export interface Orders {
+  id: number;
+  customerid : number;
+  customerName : string;
+  customerEmail : string;
+  customerphone : string;
+  shippingAddress : object;
+  total : number;
+  items : Array<id>;
+  createdAt : string;
+  statue : string;
+  trackingNumber : number;
+  note : string;
+}
+
 
 export interface Product {
-  id: string;
+  id: number;
   Name: string;
   price: number;
-  originalPrice?: number;
+  originalPrice: number;
   discount?: number;
   image: string;
   desc: string;
@@ -109,7 +124,7 @@ export interface ThemeColors {
   surfaceColor: string;
   primaryText: string;
   secondaryText: string;
-  border: string;
+  // border: string;
   success: string;
   warning: string;
   error: string;
@@ -126,23 +141,14 @@ export interface SocialMediaLinks {
 }
 
 export interface WebsiteSettings {
-  siteName: string;
-  siteDescription: string;
-  contactEmail: string;
-  contactPhone: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
-  socialMedia: SocialMediaLinks;
-  enableNotifications: boolean;
-  enableReviews: boolean;
-  enableWishlist: boolean;
-  currency: string;
-  taxRate: number;
-  freeShippingThreshold: number;
-  defaultShipping: number;
+
+settings: Array ;
+features: Array ;
+commerce: Array ;
+    security: Array ;
+  companyInfo: Array;
+  socialMedia: Array
+
 }
 
 export interface Followers {
@@ -151,6 +157,9 @@ export interface Followers {
 }
 
 interface StoreState {
+
+  // orders
+  orders : Orders[]
   // Products
   products: Product[];
   
@@ -177,21 +186,23 @@ interface StoreState {
   themeColors: ThemeColors;
   
   // Website Settings
-  websiteSettings: WebsiteSettings;
+  websiteSettings: WebsiteSettings[];
   
   // Search
   searchQuery: string;
   
  // order Actions
-   addOrder : (productInfo : object,userInfo : object)=>void;
-   updateOrder : (OrderState)=>void;
+   addOrder : (OrderInfo : object)=>void;
+   updateOrders : (id,orderData)=>void;
+   getOrders : ()=>void;
+   deleteOrders : (orderId : number) => void;
   // Product actions
   addProduct: (product: Omit<Product, 'id' | 'reviews'>) => void;
   updateProduct: (id: string, product: Partial<Product>) => void;
   deleteProduct: (id: string) => void;
   
   // Discount actions
-  addDiscount: (productId: string, discount: number) => void;
+  addDiscount: (productId: string, discount: number,price : number) => void;
   removeDiscount: (productId: string) => void;
   
   // Cart actions
@@ -202,13 +213,13 @@ interface StoreState {
   
   // User actions
   signUp: (userData: Omit<User, 'id' | 'wishlist' | 'createdAt'>) => void;
- signIn: (email: string, password: string) => Promise<boolean>;
-  signOut: () => void;
+ signIn: (email: string, password: string) => Promise<boolean>; 
+  signOut: (email : string) => void;
   updateUser: (userData: Partial<User>) => void;
   deleteUser: (userId: string) => void;
   
   // Wishlist actions
-  addToWishlist: (productId: string) => void;
+  addToWishlist: (productIds: Array<string>, productId: string) => void;
   removeFromWishlist: (productId: string) => void;
   
   // Review actions
@@ -326,8 +337,8 @@ const defaultWebsiteSettings: WebsiteSettings = {
     },
     commerce: {
       taxRate: 8,
-      currency: "EUR",
-      defaultShippingCost: 9.99
+      currency: "DZD",
+      defaultShippingCost: 1000
     },
     security: {
       sessionTimeout: 60,
@@ -340,7 +351,20 @@ const defaultWebsiteSettings: WebsiteSettings = {
     companyName: "shopHub",
     address: "address",
     desc: "description",
-    metaDesc: "metaData description",
+    metaDesc: "Discover amazing products with cutting-edge technology and unbeatable prices. Your perfect shopping experience starts here.v",
+    metaKeyWords: [
+  "ecommerce website",
+  "online shopping",
+  "online store",
+  "buy online",
+  "secure payment",
+  "fast delivery",
+  "best deals",
+  "trusted online store",
+  "ecommerce Algeria",
+  "online shopping Algeria"
+],
+    metaTitle: "ShopHub - Your Premium E-commerce Experience",
     vission: "vission",
     mission: "misson",
     story: "your Company Story",
@@ -377,25 +401,84 @@ export const useStore = create<StoreState>()(
       notifications: [],
       searchQuery: '',
       themeColors: defaultThemeColors,
-      websiteSettings: defaultWebsiteSettings,
+      websiteSettings: [],
+      orders : [],
       followers : [],
-      companyInfo: {
-        name: 'ShopHub',
-        description: 'Your premium destination for cutting-edge technology and amazing products.',
-        mission: 'To provide the best shopping experience with unbeatable prices and quality.',
-        vision: 'To become the world\'s most trusted e-commerce platform.',
-        founded: '2020',
-        employees: '500+',
-        location: 'Tech City, TC',
-        phone: '+1 (555) 123-4567',
-        email: 'info@shophub.com',
-        story: 'Founded in 2020 by a team of passionate entrepreneurs, ShopHub started as a small online store with a big vision. Today, we serve millions of customers worldwide.',
-        values: ['Customer First', 'Innovation', 'Quality', 'Integrity', 'Sustainability'],
-      },
+      // companyInfo: {
+      //   name: 'ShopHub',
+      //   description: 'Your premium destination for cutting-edge technology and amazing products.',
+      //   mission: 'To provide the best shopping experience with unbeatable prices and quality.',
+      //   vision: 'To become the world\'s most trusted e-commerce platform.',
+      //   founded: '2020',
+      //   employees: '500+',
+      //   location: 'Tech City, TC',
+      //   phone: '+1 (555) 123-4567',
+      //   email: 'info@shophub.com',
+      //   story: 'Founded in 2020 by a team of passionate entrepreneurs, ShopHub started as a small online store with a big vision. Today, we serve millions of customers worldwide.',
+      //   values: ['Customer First', 'Innovation', 'Quality', 'Integrity', 'Sustainability'],
+      // },
       getCurrentUser : async (data) =>{
         set({currentUser : data})
       },
 
+      addOrder : async (OrderInfo) => {
+        try{
+          console.log(OrderInfo)
+          const newOrder = await axios.post(`${URL}/api/orders/addOrder`,OrderInfo)
+          if(newOrder.status == 200){
+            get().addNotification('this operation was successful we will contact you as soon as possible.','success')
+            set((state)=>({
+              orders : [...state.orders,newOrder.data]
+            }))
+          }
+        }catch(err){
+          console.log(err)
+          get().addNotification('cant make this order please try again.','error')
+        }
+      },
+      getOrders : async ()=>{
+        try{
+          const getOrder = await axios.get(`${URL}/api/orders/getOrders`)
+          if(getOrder.status == 200){
+             set({
+              orders : getOrder.data
+             })
+          }
+        }catch(err){
+          console.log(err)
+          get().addNotification('cant get orders please try refresh the page ', 'error')
+        }
+      },
+      updateOrders : async (id,orderData) => {
+       
+        try{
+          const updateRequest = await axios.put(`${URL}/api/orders/updateOrder`,{id,orderData})
+          if(updateRequest.status == 200){
+            get().addNotification('Order Row updated successfully','success')
+          //  console.log(updateRequest)
+            set({
+              orders : updateRequest.data
+            })
+          }
+        }catch(err){
+          console.log(err)
+          get().addNotification('cant update this order Row please try again','error')
+        }
+      },
+      deleteOrders : async (orderId) => {
+        try{
+          const deleteOrder = await axios.delete(`${URL}/api/orders/deleteOrder/${orderId}`)
+          if(deleteOrder.status == 200){
+            get().addNotification('Order deleted successfully','success')
+            set({
+              orders : get().orders.filter(order => order.id !== orderId)
+            })
+          }
+        }catch(err){
+          console.log(err)
+          get().addNotification('cant delete this order please try again','error')
+        }
+      },
 
       getProducts: async () => {
         try{
@@ -428,7 +511,7 @@ const rates = { USD: 129.66, EUR: 152.29, DZD: 1 };
       break;
     case "DZD":
       priceInDZD = product.price;
-      symbole = 'dz'
+      symbole = 'DZD'
       cur = "DZD"
       break;
     default:
@@ -445,7 +528,7 @@ const rates = { USD: 129.66, EUR: 152.29, DZD: 1 };
 });
             
 
-  console.log(productsInDinar)
+
 
               set({products : productsInDinar})
             }
@@ -495,6 +578,9 @@ const rates = { USD: 129.66, EUR: 152.29, DZD: 1 };
             console.log(err)
             get().addNotification('cant update this product please try again','error')
           }
+      },
+      updateProducts : async(updatedProducts) =>{
+        set({products : updatedProducts})
       },
       
       deleteProduct: async(id) => {
@@ -595,7 +681,7 @@ const rates = { USD: 129.66, EUR: 152.29, DZD: 1 };
             cart: [...state.cart, { product, quantity }],
           };
         });
-        get().addNotification(`${product.name} added to cart!`, 'success');
+        get().addNotification(`${product.Name} added to cart!`, 'success');
       },
       
       removeFromCart: (productId) => {
@@ -676,7 +762,7 @@ addCurrentUser: async (email) =>{
         }
       },
       
-      signIn: async (email, password ) => {
+      signIn: async (email, password ): Promise<string | false> => {
        // console.log({email,password})
   try {
     
@@ -712,7 +798,7 @@ addCurrentUser: async (email) =>{
 
   } catch (err: any) {
     console.error('Login error:', err?.response?.data || err);
-    get().addNotification('Login failed!', 'error');
+    get().addNotification(`Login failed!\n${err?.response?.data?.error || err}`, 'error');
     return false;
   }
 },
@@ -721,12 +807,17 @@ addCurrentUser: async (email) =>{
       signOut: async (email) => {
         const cookies = new Cookies()
         try {
+          if(email){
           // 1️⃣ Invalidate session on server
           const response = await axios.put(`${URL}/api/user/logout`, {email});
           sessionStorage.setItem('adminAuth','false')
           cookies.remove('secured', { path: '/' });
         set({ currentUser: null, cart: [], isAdmin: false });
         get().addNotification('Signed out successfully!', 'info');
+          }else{
+            return
+          }
+
         } catch (error) {
           get().addNotification('error while signing out please try again', 'error');
           console.error('Logout error:', error);
@@ -740,6 +831,7 @@ addCurrentUser: async (email) =>{
         const { currentUser } = get();
         
         if (!currentUser) return;
+        // console.log(userData)
         try{
         const updUser = await axios.put(`${URL}/api/user/updateUser`,{userData})
 
@@ -789,16 +881,47 @@ addCurrentUser: async (email) =>{
         }));
         get().addNotification('User deleted successfully!', 'success');
       },
+      getWishList : async () =>{
+        try{
+         
+          const { currentUser } = get();
+          const getWishList = await axios.post(`${URL}/api/user/getAllUsers`,{email : currentUser.email})
+
+          
+          if (!currentUser) return;
+          // const filtredUser = users.find(u=> u.id === currentUser.id)
+         
+          const updatedUser = {
+          ...currentUser,
+          wishlist: getWishList.data.wishlist,
+        };
+        
+        set((state) => ({
+          currentUser: updatedUser,
+          users: state.users.map(u => u.id === currentUser.id ? updatedUser : u),
+        }));
+
+          
+        }catch(err){
+          console.log(err)
+        }
+      },
       
-      addToWishlist: (productId) => {
+      addToWishlist: async (productId) => {
         // console.log(get().wishlist)
-        console.log(productId)
-        const { currentUser } = get();
+        const {currentUser} = get()
+        const userId = currentUser.id
+        try{
+          const addProduct = await axios.post(`${URL}/api/user/wishlist/addProduct`,{productId,userId})
+          if(addProduct.status == 200){
+
+        
+
+           
         if (!currentUser) {
           get().addNotification('Please sign in to add to wishlist', 'error');
           return;
         }
-        console.log(currentUser)
         if (currentUser?.wishlist?.includes(productId)) {
           get().addNotification('Item already in wishlist!', 'info');
           return;
@@ -814,13 +937,23 @@ addCurrentUser: async (email) =>{
           users: state.users.map(u => u.id === currentUser.id ? updatedUser : u),
         }));
         get().addNotification('Added to wishlist!', 'success');
+
+
+          }
+        }catch(err){
+          get().addNotification('cant make this please try again','error')
+        }
+        console.log(productId)
+       
       },
       
-      removeFromWishlist: (productId) => {
+      removeFromWishlist:async (productId) => {
         const { currentUser } = get();
         if (!currentUser) return;
-        
-        const updatedUser = {
+        try{
+          const removeProduct = await axios.put(`${URL}/api/user/wishlist/removeProduct`,{productId,userId : currentUser.id})
+        if(removeProduct.status == 200){
+          const updatedUser = {
           ...currentUser,
           wishlist: currentUser.wishlist.filter(id => id !== productId),
         };
@@ -830,6 +963,12 @@ addCurrentUser: async (email) =>{
           users: state.users.map(u => u.id === currentUser.id ? updatedUser : u),
         }));
         get().addNotification('Removed from wishlist!', 'info');
+        }
+        }catch(err){
+          console.log(err)
+          get().addNotification('cant remove this item from wishlist please try again', 'error')
+        }
+        
       },
       
       addReview: async (reviewData) => {
@@ -867,34 +1006,77 @@ addCurrentUser: async (email) =>{
         get().addNotification('Review cant be added please try again!', 'error');
         }
       },
-      
-      addMessage: (messageData) => {
-        const newMessage: Message = {
-          ...messageData,
-          id: Date.now().toString(),
-          date: new Date().toISOString().split('T')[0],
-          isRead: false,
-        };
-        
-        set((state) => ({
-          messages: [newMessage, ...state.messages],
+
+      getMessages : async () => {
+        try{
+          const getMessages = await axios.get(`${URL}/api/messages/getMessages`)
+          set((state) => ({
+            messages: getMessages.data
+          }))
+        }catch(err){
+          console.log(err)
+        }
+      },
+
+      addMessage: async (messageData) => {
+        // const newMessage: Message = {
+        //   ...messageData,
+        //   id: Date.now().toString(),
+        //   date: new Date().toISOString().split('T')[0],
+        //   isRead: false,
+        // };
+
+        try{
+
+          const addMessage = await axios.post(`${URL}/api/messages/addMessage`,{messageData})
+          if(addMessage.status == 200){
+          
+          set((state) => ({
+          messages: [addMessage.data, ...state.messages],
         }));
         get().addNotification('Message sent successfully!', 'success');
+
+          }
+
+        }
+        catch(err){
+          console.log(err)
+          get().addNotification('cant send the message please try again', 'error')
+        }
+        
       },
       
-      markMessageAsRead: (id) => {
-        set((state) => ({
+      markMessageAsRead:async (id) => {
+        try{
+          const markAsRead = await axios.put(`${URL}/api/messages/markAsRead/${id}`)
+          if(markAsRead.status == 200){
+          
+          set((state) => ({
           messages: state.messages.map(msg => 
             msg.id === id ? { ...msg, isRead: true } : msg
           ),
         }));
+          }
+
+        
+        }catch(err){
+          console.log(err)
+        }
+        
       },
       
-      deleteMessage: (id) => {
-        set((state) => ({
-          messages: state.messages.filter(msg => msg.id !== id),
-        }));
-        get().addNotification('Message deleted', 'info');
+      deleteMessages: async(id) => {
+        try{
+          const deleteMessage = await axios.delete(`${URL}/api/messages/deleteMessage/${id}`)
+          if(deleteMessage.status == 200){
+          set((state) => ({
+            messages: state.messages.filter(msg => msg.id !== id),
+          }));
+          get().addNotification('Message deleted', 'info');
+          }
+        }catch(err){
+          console.log(err)
+        }
       },
       
       updateCompanyInfo: (info) => {
@@ -964,7 +1146,7 @@ addCurrentUser: async (email) =>{
 
     if (res.status === 200) {
       const data = res.data;
-
+      // console.log(data)
       const normalizedColors = normalizeThemeColors(
         data.settings?.colors || {}
       );
@@ -1050,10 +1232,20 @@ addCurrentUser: async (email) =>{
           get().addNotification('please try again', 'error');
         }
       },
-
-      updateFollowState: async (email) =>{
+      updateFollower : async ({firstTimeLog,followed,email}) =>{
         try{
-          const update = await axios.post(`${URL}/api/followers/addFollower`,{email})
+          const update = await axios.put(`${URL}/api/followers/updateFollower`,{firstTimeLog,followed,email})
+          if(update.status == 200){
+            console.log('updated')
+          }
+        }catch(err){
+          console.log(err)
+        }
+      }
+      ,
+      updateFollowState: async (email,method) =>{
+        try{
+          const update = await axios.post(`${URL}/api/followers/addFollower`,{email,method})
           if(update.status == 201){
             get().addNotification('updated with success','success')
           }
@@ -1076,6 +1268,19 @@ addCurrentUser: async (email) =>{
         }
       }
       ,
+      deleteFollower : async (email) =>{
+      
+        try{
+          const deleteFollwer = await axios.delete(`${URL}/api/followers/deleteFollower/${email}`)
+          if(deleteFollwer.status == 200){
+            set({followers : get().followers.filter(f => f.email !== email)})
+            get().addNotification('follower deleted successfully','success')
+          } 
+          }
+        catch(err){
+          console.log(err)
+        }
+        },
 
       addNotification: (message, type) => {
         const notification: Notification = {

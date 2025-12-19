@@ -14,7 +14,7 @@ import Cookies from 'universal-cookie';
 export default function ProfilePage() {
   // const isAdmin = true
   const navigate = useNavigate();
-  const { websiteSettings,updateFollowState,getFollowers,updateUserSettings,deleteAccount,currentUser,followers, updateUser } = useStore();
+  const { websiteSettings,deleteFollower,updateFollowState,getFollowers,updateFollower,updateUserSettings,deleteAccount,currentUser,followers, updateUser } = useStore();
   const [passwordEdit , setPasswordEdit] = useState(true)
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -38,7 +38,9 @@ export default function ProfilePage() {
   // console.log(wish)
 
   const subscribeHandle = async () => {
-  await updateFollowState(currentUser.email);
+  await updateFollowState(currentUser.email,'deleteOrAdd');
+  updateFollower({firstTimeLog : false,followed : follow,email : currentUser.email})
+  // console.log(follow)
   await getFollowers(); // this updates `followers`
 };
 
@@ -49,6 +51,7 @@ export default function ProfilePage() {
   const isFollowing = followers.some(
     e => e.email === currentUser.email
   );
+
 
   setFollow(isFollowing);
 }, [followers, currentUser]);
@@ -79,23 +82,23 @@ const settingsMap = {
 
   const previousValue = UserSettingsForm[settingKey];
 
-  // 1) Optimistically set the UI immediately
-  setUserSettingsForm(prev => ({
-    ...prev,
+  // 1) Build next state explicitly (NO stale data)
+  const nextSettings = {
+    ...UserSettingsForm,
     [settingKey]: checked
-  }));
+  };
+
+  // 2) Optimistically update UI
+  setUserSettingsForm(nextSettings);
 
   try {
-    // 2) Call backend to update settings
+    // 3) Send the SAME next state to backend
     const success = await updateUserSettings(
-      {
-        ...UserSettingsForm,
-        [settingKey]: checked
-      },
+      nextSettings,
       currentUser.email
     );
 
-    // 3) If backend failed → revert UI
+    // 4) Revert UI if backend failed
     if (!success) {
       setUserSettingsForm(prev => ({
         ...prev,
@@ -103,16 +106,17 @@ const settingsMap = {
       }));
     }
 
-  } catch (err) {
-    console.error("Update failed:", err);
+  } catch (error) {
+    console.error("Update failed:", error);
 
-    // 4) Revert UI on error
+    // 5) Revert UI on error
     setUserSettingsForm(prev => ({
       ...prev,
       [settingKey]: previousValue
     }));
   }
 };
+
 
 
   const [UserSettingsForm , setUserSettingsForm] = useState({
@@ -141,57 +145,12 @@ const settingsMap = {
 const cookies = new Cookies()
 
 const [settings, setSettings] = useState({
-    // General Settings
-    siteName: 'ShopHub',
-    siteDescription: 'Your premium e-commerce destination',
-    contactEmail: 'support@shophub.com',
-    contactPhone: '+1 (555) 123-4567',
-    
-    // Layout Settings
-    headerStyle: 'modern',
-    footerStyle: 'detailed',
-    productGridColumns: 4,
-    showProductRatings: true,
-    showProductReviews: true,
-    
-    // Feature Settings
-    enableNotifications: true,
-    enableReviews: true,
-    enableWishlist: true,
-    enableCompare: false,
-    enableLiveChat: false,
-    
-    // E-commerce Settings
-    currency: 'USD',
-    taxRate: 8,
-    freeShippingThreshold: 50,
-    defaultShipping: 9.99,
-    
-    // SEO Settings
-    metaTitle: 'ShopHub - Premium E-commerce Store',
-    metaDescription: 'Discover amazing products with cutting-edge technology and unbeatable prices.',
-    metaKeywords: 'ecommerce, shopping, electronics, gadgets',
-    
-    // Security Settings
-    enableTwoFactor: false,
-    sessionTimeout: 30,
-    passwordMinLength: 8,
-    enableCaptcha: true,
-    
-    // Analytics Settings
-    googleAnalyticsId: '',
-    facebookPixelId: '',
-    enableHeatmaps: false,
-    
-    // Advanced Settings
-    customCSS: '',
-    customJS: '',
-    maintenanceMode: false,
   });
 
 
-  const deleteAccountAlert = ()=>{
+  const deleteAccountAlert = async()=>{
     if(confirm('are you sure you want to delete your account ?')){
+      await deleteFollower(currentUser.email);
      deleteAccount(currentUser.email)
     }
   else{

@@ -11,6 +11,10 @@ const WebsiteSettingsRoute = require('./Routes/WebsiteSettingsRoute')
 const CompanyInfoRoute = require('./Routes/CompanyInfoRoute')
 const UsersFolowedRoute = require('./Routes/UsersFolowedRoute')
 const ProductsRoute = require('./Routes/ProductsRoute')
+const OrdersRoute = require('./Routes/OrdersRoute')
+const WishListRoute = require('./Routes/WishListRoute')
+const MessagesRoute = require('./Routes/MessagesRoute')
+
 
 // const { User } = require("lucide-react");
 
@@ -75,7 +79,9 @@ app.use("/api/webSiteSettings",WebsiteSettingsRoute);
 app.use("/api/followers",UsersFolowedRoute)
 // app.use("/api/webSiteinfo",CompanyInfoRoute);
 app.use("/api/products",ProductsRoute)
-
+app.use("/api/orders",OrdersRoute)
+app.use("/api/user/wishlist",WishListRoute)
+app.use("/api/messages",MessagesRoute)
 // === Handle 404 ===
 app.use((req, res) => {
   res.status(404).json({ error: "Not Found" });

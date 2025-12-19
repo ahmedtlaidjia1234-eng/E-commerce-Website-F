@@ -211,7 +211,7 @@ const fileToBase64 = (file) => {
         updateProduct(updatedProduct.id, updatedProduct);
       setIsEditProductOpen(false);
       setEditingProduct(null);
-      getProducts()
+      
         
     }
   }else{
@@ -221,7 +221,7 @@ const fileToBase64 = (file) => {
    updateProduct(updatedProduct.id, updatedProduct) 
       setIsEditProductOpen(false);
       setEditingProduct(null);
-      getProducts()
+    
   }
       
     }
@@ -236,12 +236,11 @@ const fileToBase64 = (file) => {
 
   const handleApplyDiscount = () => {
     if (discountProductId && discountAmount > 0) {
-      const product = products.find(p=>p.id = discountProductId)
+      const product = products.find(p=> p.id == discountProductId)
       
       addDiscount(product.id, discountAmount,product.price);
       setDiscountProductId('');
       setDiscountAmount(0);
-      getProducts()
     }
     // console.log(discountProductId)
   };
@@ -566,7 +565,7 @@ const fileToBase64 = (file) => {
                   <Input
                     id="price"
                     type="number"
-                    step="0.01"
+                    step="1"
                     value={newProduct.price || ''}
                     onChange={(e) => setNewProduct(prev => ({ ...prev, price: Number(e.target.value) }))}
                     placeholder="0.00"
@@ -671,7 +670,7 @@ const fileToBase64 = (file) => {
                     <Input
                       id="edit-price"
                       type="number"
-                      step="0.01"
+                      step="1"
                       value={editingProduct.price || ''}
                       onChange={(e) => setEditingProduct(prev => ({ ...prev, price: Number(e.target.value) }))}
                     />
@@ -683,7 +682,7 @@ const fileToBase64 = (file) => {
                     <Input
                       id="edit-originalPrice"
                       type="number"
-                      step="0.01"
+                      step="1"
                       value={editingProduct.originalPrice || ''}
                       onChange={(e) => setEditingProduct(prev => ({ ...prev, originalPrice: Number(e.target.value) }))}
                     />

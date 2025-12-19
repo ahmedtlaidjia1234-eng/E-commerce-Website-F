@@ -127,19 +127,17 @@ router.post("/register", async (req, res) => {
 
 router.put("/updateUser", async (req, res) => {
 
-  const { fName, lName, streetAdr, city, state, zipCode, country, password, email, phone, location } = req.body.userSettings;
-  const oldEmail = req.body.email
-  // console.log(req.body.password)
+  const { fName, lName, streetAdr, city, state, zipCode, country, password, email, phone, location } = req.body.userData;
+  const oldEmail = req.body.userData.oldEmail
   let oldpass ;
 if(password === '' || password === undefined){
   const getOldData = await User.findOne({where : {email : oldEmail}})
   const oldPassword = getOldData.dataValues.password
   oldpass = oldPassword
-  console.log(oldPassword)
 }else{
   oldpass = password
 }
-// console.log(oldpass)
+
  const newUser = await User.update({fName, lName,
      streetAdr ,city, state,
    zipCode,
@@ -148,7 +146,7 @@ if(password === '' || password === undefined){
      location,
      
   },{where: {email : oldEmail} , individualHooks: true});
-// console.log(newUser)
+
   if (newUser) {
     res.status(201).json(newUser);
   } else {
@@ -165,6 +163,7 @@ router.post("/login", async (req, res) => {
     const pass = req.body.password;
     const firstTimeLog = req.body.firstTimeLog
     // 1. Check if user exists
+    // console.log(email)
     const user = await User.findOne({ where: { email } });
     if (!user) {
       return res.status(404).json({ error: "Wrong Email" });
@@ -175,7 +174,10 @@ router.post("/login", async (req, res) => {
         const WebsiteSettings = await WebsiteSettingsModel.findAll()
     const passwordMinLength = WebsiteSettings[0].dataValues.security.minimumPasswordLength
     if(pass.length < passwordMinLength) return res.status(401).json(`your password must have min length ${passwordMinLength}`)
+    //   // update firstLog
+    // const firstLog = await User.update({firstTimeLog : false},{where : {email}})
 
+    // if(!firstLog) res.status(401).json('something wrong')
     // 3. Compare password with bcrypt
     
     const isValidPassword = await bcrypt.compare(pass, user.password);
@@ -185,7 +187,7 @@ router.post("/login", async (req, res) => {
     }
  
     // 3. Successful login response (DO NOT send password)
-    const authUser = await User.update({ auth : true , firstTimeLog }, {where : {email}});
+    const authUser = await User.update({ auth : true }, {where : {email}});
     if(!authUser){
       return res.status(401).json({ message: "Something Wrong" });
     }
@@ -200,7 +202,7 @@ const token = jwt.sign(
             JWT_SECRET,  
             // Options: Set token expiration
             // { expiresIn: userWP.expire } // Token expires in 1 hour
-        );
+        ); 
  
 
         res.status(200).json({ 
@@ -258,13 +260,13 @@ router.post("/deleteUser", async (req, res) => {
 
 router.put("/EditUserSettings", async (req, res) => {
   try{
-     const { UserSettigns , email } = req.body;
+     const { UserSettings , email } = req.body;
  
-    // console.log(req.body)
-  const deletedUser = await User.update({UserSettigns} , { where: { email } });
-  // const deletedUser = true
+    // console.log(UserSettings)
+  const updatedUser = await User.update({userSettings : UserSettings} , { where: { email } });
+  // const updatedUser = true
   // res.status(200).json('User deleted successfully');
-  if (deletedUser) {
+  if (updatedUser) {
     res.status(200).json('User deleted successfully');
   } else {
     res.status(404).json({ error: "User not found" });
