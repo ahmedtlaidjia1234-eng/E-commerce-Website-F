@@ -350,10 +350,12 @@ const handleViewOrder = (order: Order) => {
 
 
 
-
 const safeText = (value: any) =>
   value !== undefined && value !== null ? String(value) : "";
+const websiteSettings = useStore.getState().websiteSettings;
+const getSellerEmail = websiteSettings.companyInfo.email
 
+const SellerInfo = users.filter(v => v.isAdmin === true && v.email === getSellerEmail)[0];
 const generateInvoicePDF = (order) => {
   const doc = new jsPDF();
 
@@ -366,6 +368,7 @@ const generateInvoicePDF = (order) => {
 
   y += 15;
 
+
   /* ===== ORDER INFO ===== */
   doc.setFontSize(11);
   doc.setFont("Helvetica", "normal");
@@ -373,17 +376,28 @@ const generateInvoicePDF = (order) => {
   doc.text(`Numéro de commande : ${order.id}`, 14, y); y += 7;
   doc.text(`Date : ${new Date(order.createdAt).toLocaleDateString("fr-FR")}`, 14, y); y += 7;
 
-  /* ===== CUSTOMER ===== */
+  /* ===== Seller INFO ===== */
   y += 5;
   doc.setFont("Helvetica", "bold");
-  doc.text("Informations client", 14, y); y += 7;
+  doc.text("Informations de vendeur", 14, y); y += 7;
 
   doc.setFont("Helvetica", "normal");
-  doc.text(`Nom : ${order.customerName}`, 14, y); y += 6;
-  doc.text(`Email : ${order.customerEmail}`, 14, y); y += 6;
-  doc.text(`Téléphone : ${order.customerPhone}`, 14, y); y += 10;
+  doc.text(`Nom : ${SellerInfo.fName} ${SellerInfo.lName}`, 14, y); y += 6;
+  doc.text(`Email : ${SellerInfo.email}`, 14, y); y += 6;
+  doc.text(`Téléphone : ${SellerInfo.phone}`, 14, y); y += 10;
+  
+  /* ===== CUSTOMER ===== */
+  
+  doc.setFont("Helvetica", "bold");
+  doc.text("Informations client", 100, y - 28.5); y += 7;
+
+  doc.setFont("Helvetica", "normal");
+  doc.text(`Nom : ${order.customerName}`, 100, y - 28.5); y += 6;
+  doc.text(`Email : ${order.customerEmail}`, 100, y - 28.5); y += 6;
+  doc.text(`Téléphone : ${order.customerPhone}`, 100, y - 28.5); y += 10;
 
   /* ===== ITEMS HEADER ===== */
+  y -= 20
   doc.setFont("Helvetica", "bold");
   doc.text("Articles", 14, y); y += 8;
 

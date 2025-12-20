@@ -313,9 +313,9 @@ const wish = wishF()
               >
                 <div 
                   className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-white text-base shadow-lg"
-                  style={{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))' }}
+                  style={{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))', backgroundImage: 'url(https://i.ibb.co/x8zk4yfw/597842787-848711448141582-4494113292186656650-n.jpg)', backgroundSize: 'cover' }}
                 >
-                  {(websiteSettings?.companyInfo?.companyName)?.split('')[0].toUpperCase()}
+                  {/* {(websiteSettings?.companyInfo?.companyName)?.split('')[0].toUpperCase()} */}
                 </div>
                 <span className="text-xl font-extrabold tracking-tight" style={{ color: 'var(--color-text)' }}>
                   {websiteSettings?.companyInfo?.companyName || 'TechShop'}
