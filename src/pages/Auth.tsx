@@ -194,7 +194,7 @@ const handleSignUp = async (e: React.FormEvent) => {
   }
 
   // ✅ ALWAYS generate a fresh code on each run
-  const verificationCode = generateVerificationCode();
+  // const verificationCode = generateVerificationCode();
   // sessionStorage.setItem('verificationCode', verificationCode); 
   sessionStorage.setItem('pendingUser', JSON.stringify(signUpData));
 // console.log(verificationCode)
@@ -203,7 +203,7 @@ const handleSignUp = async (e: React.FormEvent) => {
       `${URL}/api/user/verification/addCode`,
       {
         email: signUpData.email,
-        code: verificationCode,
+        // code: verificationCode,
         createdAt: Date.now(), // helps backend invalidate old codes
       }
     );

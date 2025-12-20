@@ -8,7 +8,7 @@ const CompanyInfoModel = sequelize.define('CompanyInfo',{
         defaultValue : 'shopHub',
         allowNull : false
     },
-    address : {
+    address : { 
         type : DataTypes.STRING,
         defaultValue : 'Algeria/Setif',
         allowNull : false
@@ -21,19 +21,23 @@ const CompanyInfoModel = sequelize.define('CompanyInfo',{
     ,
     metaTitle : {
         type : DataTypes.STRING,
-        defaultValue : 'metaData description',
+        defaultValue : 'ShopHub - Your Premium E-commerce Experience',
         allowNull : false
     },
     metaDesc : {
         type : DataTypes.STRING,
-        defaultValue : 'metaData description',
+        defaultValue : 'Discover amazing products with cutting-edge technology and unbeatable prices. Your perfect shopping experience starts here.',
         allowNull : false
     },
     metaKeyWords : {
         type : DataTypes.ARRAY(DataTypes.STRING),
         defaultValue :[
-            "something1",
-            "something2"
+            "E-commerce",
+            "Online Shopping",
+            "Tech Products",
+            "Gadgets",
+            "Best Deals",
+            "ShopHub"
         ],
         allowNull : false
     },

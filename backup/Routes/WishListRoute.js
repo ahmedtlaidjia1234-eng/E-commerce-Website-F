@@ -28,7 +28,7 @@ try{
   console.log(err)
   return res.status(500).json(err)
 }
-});
+}); 
 
 router.put("/removeProduct", async (req, res) => {
   try{

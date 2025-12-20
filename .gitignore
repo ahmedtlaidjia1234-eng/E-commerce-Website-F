@@ -24,4 +24,7 @@ dist-ssr
 *.sw?
 
 Server/
+Server
+backup/
+backup
 local-packages

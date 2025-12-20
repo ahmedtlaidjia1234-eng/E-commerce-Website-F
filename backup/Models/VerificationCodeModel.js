@@ -3,9 +3,10 @@ const {sequelize} = require('../config/database.js')
 
 
 const VerificationCodeModel = sequelize.define('VerificationCode',{
-    email : {
+  
+  email : {
         type : DataTypes.STRING, 
-        unique : true,
+        unique : false,
         allowNull : false
     },
     code : {
@@ -13,7 +14,6 @@ const VerificationCodeModel = sequelize.define('VerificationCode',{
         unique : true,
         allowNull : false
     },
-
     
     })
 

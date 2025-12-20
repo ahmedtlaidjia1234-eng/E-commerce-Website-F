@@ -46,6 +46,7 @@ import {
 import { useStore } from '@/lib/store';
 import JSZip from "jszip";
 import { StyledWrapper } from '@/components/ui/loader';
+import jsPDF from "jspdf";
 
 interface OrderItem {
   id: string;
@@ -182,6 +183,10 @@ export default function OrdersPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [refresh,setRefresh]=useState(true)
+
+  const canDownloadInvoice = (order: Order) => {
+  return currentUser.isAdmin || order.customerid === currentUser.id;
+};
 
   if (!currentUser) {
     navigate('/auth');
@@ -342,6 +347,106 @@ const handleViewOrder = (order: Order) => {
       // addNotification('Order deleted successfully!', 'success');
     }
   };
+
+
+
+
+const safeText = (value: any) =>
+  value !== undefined && value !== null ? String(value) : "";
+
+const generateInvoicePDF = (order) => {
+  const doc = new jsPDF();
+
+  let y = 20;
+
+  /* ===== TITLE ===== */
+  doc.setFont("Helvetica", "bold");
+  doc.setFontSize(18);
+  doc.text("Facture de paiement électronique", 105, y, { align: "center" });
+
+  y += 15;
+
+  /* ===== ORDER INFO ===== */
+  doc.setFontSize(11);
+  doc.setFont("Helvetica", "normal");
+
+  doc.text(`Numéro de commande : ${order.id}`, 14, y); y += 7;
+  doc.text(`Date : ${new Date(order.createdAt).toLocaleDateString("fr-FR")}`, 14, y); y += 7;
+
+  /* ===== CUSTOMER ===== */
+  y += 5;
+  doc.setFont("Helvetica", "bold");
+  doc.text("Informations client", 14, y); y += 7;
+
+  doc.setFont("Helvetica", "normal");
+  doc.text(`Nom : ${order.customerName}`, 14, y); y += 6;
+  doc.text(`Email : ${order.customerEmail}`, 14, y); y += 6;
+  doc.text(`Téléphone : ${order.customerPhone}`, 14, y); y += 10;
+
+  /* ===== ITEMS HEADER ===== */
+  doc.setFont("Helvetica", "bold");
+  doc.text("Articles", 14, y); y += 8;
+
+  doc.setFontSize(10);
+  doc.text("Produit", 14, y);
+  doc.text("Qté", 120, y);
+  doc.text("Prix", 140, y);
+  doc.text("Total", 170, y);
+  y += 5;
+
+  doc.line(14, y, 196, y);
+  y += 5;
+
+  /* ===== ITEMS ===== */
+  doc.setFont("Helvetica", "normal");
+
+  order.items.forEach((item) => {
+    const total = item.product.price * item.quantity;
+
+    doc.text(item.product.Name, 14, y);
+    doc.text(String(item.quantity), 125, y);
+    doc.text(`${item.product.price} DZD`, 140, y);
+    doc.text(`${total.toFixed(2)} DZD`, 170, y);
+
+    y += 7;
+  });
+
+  y += 5;
+  doc.line(14, y, 196, y);
+  y += 7;
+
+  /* ===== TOTALS ===== */
+  const subtotal = Number(order.total);
+  const tva = subtotal * 0.19;
+  const totalTTC = subtotal + tva;
+
+  doc.text(`Sous-total : ${subtotal} DZD`, 140, y); y += 6;
+  doc.text(`TVA (19 %) : ${tva} DZD`, 140, y); y += 6;
+
+  doc.setFont("Helvetica", "bold");
+  doc.text(`Total TTC : ${totalTTC} DZD`, 140, y); y += 10;
+
+  /* ===== PAYMENT ===== */
+  doc.setFont("Helvetica", "normal");
+  doc.text(`Méthode de paiement : Paiement à la livraison`, 14, y);
+
+  /* ===== FOOTER ===== */
+  y += 15;
+  doc.setFontSize(9);
+  doc.text(
+    "Cette facture est générée électroniquement et ne nécessite pas de signature.",
+    105,
+    y,
+    { align: "center" }
+  );
+
+  doc.save(`facture-${order.id}.pdf`);
+};
+
+
+
+
+
 
 const exportOrdersToCSV = async (orders: Order[]) => {
   if (!orders || orders.length === 0) return;
@@ -777,6 +882,17 @@ const exportOrdersToCSV = async (orders: Order[]) => {
                                       </DropdownMenuItem>
                                     </DropdownMenuContent>
                                   </DropdownMenu>
+
+                                {canDownloadInvoice(order) && (
+  <Button
+    variant="outline"
+    size="sm"
+    onClick={() => generateInvoicePDF(order)}
+  >
+    <Download className="h-4 w-4" />
+  </Button>
+)}
+
                                 </>
                               )}
                             </div>

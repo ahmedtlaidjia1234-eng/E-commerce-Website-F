@@ -9,15 +9,33 @@ router.get("/getWebsiteSettings", async (req, res) => {
     const settings = await WebsiteSettingsModel.findAll()
     const companyInfo = await CompanyInfoModel.findAll()
     const social = await SocialModel.findAll()
-    if(settings && companyInfo && social){
+    if(settings.length > 0 && companyInfo.length > 0 && social.length > 0){
       // console.log(social[0].dataValues)
       
       const data = {
-        settings : settings[0].dataValues,
-       companyInfo : companyInfo[0].dataValues,
+        settings : settings[0]?.dataValues || {},
+       companyInfo : companyInfo[0]?.dataValues || {},
         socialMedia : social
       }
       res.status(200).json(data)
+    }else{
+      const addSett = await WebsiteSettingsModel.create();
+      const addCom = await CompanyInfoModel.create();
+      const addSecials = await SocialModel.create(); 
+
+      if(addSett,addCom,addSecials){
+       const reSettings = await WebsiteSettingsModel.findAll()
+       const reCompanyInfo = await CompanyInfoModel.findAll()
+       const reSocial = await SocialModel.findAll()
+        
+        const data = {
+          settings : reSettings[0]?.dataValues || {},
+         companyInfo : reCompanyInfo[0]?.dataValues || {},
+          socialMedia : reSocial
+        }
+        res.status(200).json(data)
+      }
+
     }
   }catch(err){
     console.log(err)
@@ -37,7 +55,7 @@ router.post("/addWebsiteSettings", async (req, res) => {
        companyInfo,
         social
       ]
-     console.log(data)
+  
       res.status(200).json(data)
     }
   }catch(err){

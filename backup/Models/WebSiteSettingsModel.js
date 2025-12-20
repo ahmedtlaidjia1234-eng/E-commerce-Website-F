@@ -26,10 +26,10 @@ const WebsiteSettingsModel = sequelize.define(
       type: DataTypes.JSONB,
       allowNull: false,
       defaultValue: () => ({
-        enableReviews: false,
-        enableShowProductRatings: false,
-        enableNotifications: false,
-        enableWishlist: false,
+        enableReviews: true,
+        enableShowProductRatings: true,
+        enableNotifications: true,
+        enableWishlist: true,
       }),
     },
 
@@ -37,9 +37,9 @@ const WebsiteSettingsModel = sequelize.define(
       type: DataTypes.JSONB,
       allowNull: false,
       defaultValue: () => ({
-        currency: "EUR",
-        defaultShippingCost: 9.99,
-        taxRate: 8,
+        currency: "DZD",
+        defaultShippingCost: 600,
+        taxRate: 19,
       }),
     },
 

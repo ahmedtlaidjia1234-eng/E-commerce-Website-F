@@ -5,7 +5,7 @@ const OrdersModel = require('../Models/OrdersModel.js')
 router.get("/getOrders",async (req, res) => {
   try{
     const getOrders = await OrdersModel.findAll()
-    console.log(getOrders)
+
     if(getOrders){
       res.status(200).json(getOrders)
     }

@@ -11,42 +11,68 @@ router.post("/addCode", async (req, res) => {
   }
 
   try {
-    // 1️⃣ Create verification code
-    const newCode = await VerificationCodeModel.create({ email, code });
-    if (!newCode) {
-      return res.status(400).json({ error: "Could not create verification code" });
-    }
-    const adminEmail = process.env.EMAIL_USER;
-    // 2️⃣ Send verification email
-    
-      await sendEmail(
-        adminEmail,
-        email, 
-        "Your Verification Code",
-        `Your verification code is: ${code}`,
-        `<p>Your verification code is: <strong>${code}</strong></p>`
-      );
-      
-    
+    /* =====================================
+       1️⃣ Delete existing code (if any)
+    ===================================== */
+    await VerificationCodeModel.destroy({
+      where: { email },
+    });
 
-    // 3️⃣ Auto-delete this code after 1 hour
+    /* =====================================
+       2️⃣ Create new verification code
+    ===================================== */
+    const newCode = await VerificationCodeModel.create({
+      email,
+      code,
+    });
+
+    if (!newCode) {
+      return res
+        .status(400)
+        .json({ error: "Could not create verification code" });
+    }
+
+    /* =====================================
+       3️⃣ Send verification email
+    ===================================== */
+    const adminEmail = process.env.EMAIL_USER;
+
+    await sendEmail(
+      adminEmail,
+      email,
+      "Your Verification Code",
+      `Your verification code is: ${code}`,
+      `<p>Your verification code is: <strong>${code}</strong></p>`
+    );
+
+    /* =====================================
+       4️⃣ Auto-delete after 1 hour
+    ===================================== */
     setTimeout(async () => {
       try {
-        await VerificationCodeModel.destroy({ where: { id: newCode.id } });
+        await VerificationCodeModel.destroy({
+          where: { id: newCode.id },
+        });
         console.log(`✅ Verification code for ${email} expired and deleted`);
       } catch (err) {
         console.error("❌ Error deleting verification code:", err);
       }
-    }, 60 * 60 * 1000); // 1 hour
+    }, 60 * 60 * 1000);
 
-    // 4️⃣ Respond to client
-    res.status(201).json({ message: "Verification code created and sent", codeId: newCode.id });
-
+    /* =====================================
+       5️⃣ Response
+    ===================================== */
+    return res.status(201).json({
+      message: "Verification code created and sent",
+    });
   } catch (error) {
     console.error("❌ Error creating verification code:", error);
-    res.status(500).json({ error: "Failed to create verification code" });
+    return res.status(500).json({
+      error: "Failed to create verification code",
+    });
   }
 });
+
 
 router.post("/verifyCode", async (req, res) => {
     const {email, code} = req.body;
