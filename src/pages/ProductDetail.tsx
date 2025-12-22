@@ -57,6 +57,7 @@ export default function ProductDetailPage() {
   };
   const handleSubmitReview = () => {
     if (reviewerName.trim() && reviewComment.trim()) {
+      // console.log(reviewerName)
       addReview({
         productId: product.id,
         userName: reviewerName,

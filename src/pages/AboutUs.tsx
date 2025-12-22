@@ -27,7 +27,7 @@ export default function AboutUsPage() {
         values: companyInfo?.values || ['Innovation', 'Quality', 'Customer Focus', 'Integrity'],
         phone: websiteSettings.companyInfo?.phone || '+1 (555) 123-4567',
         email: websiteSettings.companyInfo?.email || 'support@shophub.com',
-        location:websiteSettings.companyInfo?.address || 'San Francisco, CA, USA',
+        location:websiteSettings.companyInfo?.address || 'setif',
         founded: websiteSettings.companyInfo?.founded || '2018',
         // employees: companyInfo?.employees || '150+',
     };

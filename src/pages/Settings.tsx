@@ -297,7 +297,7 @@ const companyInfoData = {id : websiteSettings?.companyInfo?.id,...filledCompanyI
 <div>
   <Label htmlFor="contactEmail">Contact Email</Label>
   <Input
-    id="contactEmail"
+    id="address"
     type="email"
     placeholder={websiteSettings?.companyInfo?.email}
     value={settings?.companyInfo?.email || ""}
@@ -307,6 +307,25 @@ const companyInfoData = {id : websiteSettings?.companyInfo?.id,...filledCompanyI
         companyInfo: {
           ...prev.companyInfo,
           email: e.target.value,
+        },
+      }))
+    }
+  />
+</div>
+
+<div>
+  <Label htmlFor="address">Location</Label>
+  <Input
+    id="address"
+    type="text"
+    placeholder={websiteSettings?.companyInfo?.address}
+    value={settings?.companyInfo?.address || ""}
+    onChange={(e) =>
+      setSettings(prev => ({
+        ...prev,
+        companyInfo: {
+          ...prev.companyInfo,
+          address: e.target.value,
         },
       }))
     }
@@ -1073,7 +1092,7 @@ const companyInfoData = {id : websiteSettings?.companyInfo?.id,...filledCompanyI
                         type="number"
                         value={settings.settings.commerce.defaultShippingCost}
                         onChange={(e) => setSettings(prev => ({ ...prev,settings : {...prev.settings , commerce : {...prev.settings.commerce , defaultShippingCost: e.target.value}} }))}
-                        min="0"
+                        min="0" 
                         step="1"
                       />
                     </div>

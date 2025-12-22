@@ -981,7 +981,6 @@ addCurrentUser: async (email) =>{
         const newReview: Review = {
           ...reviewData,
           id: Date.now().toString(),
-          userName: `${currentUser.fName} ${currentUser.lName}`,
         };
 
         const product = get().products.find(p=> p.id == reviewData.productId)
